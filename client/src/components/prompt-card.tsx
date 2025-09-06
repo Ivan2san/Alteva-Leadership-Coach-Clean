@@ -23,12 +23,12 @@ export default function PromptCard({ prompt, index, onClick }: PromptCardProps) 
             <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
               <MessageCircle className="text-primary text-xs" size={12} />
             </div>
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 max-w-full overflow-hidden">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-medium text-accent truncate">{prompt.category}</span>
                 <ArrowRight className="text-muted-foreground group-hover:text-foreground transition-colors text-xs flex-shrink-0" size={12} />
               </div>
-              <p className="text-sm text-foreground leading-relaxed text-left">
+              <p className="text-sm text-foreground leading-relaxed text-left break-words whitespace-normal">
                 {prompt.text}
               </p>
             </div>
