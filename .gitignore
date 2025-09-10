@@ -1,6 +1,27 @@
-node_modules
-dist
+# Dependencies
+node_modules/
+.pnpm-store/
+.yarn/
+.yarn/cache/
+
+# Build & output
+dist/
+build/
+.next/
+.turbo/
+.vercel/
+coverage/
+playwright-report/
+test-results/
+
+# Env & secrets
+.env
+.env.*
+
+# OS/editor noise
 .DS_Store
-server/public
-vite.config.ts.*
-*.tar.gz
+*.log
+*.log.*
+
+# Local artifacts that don’t belong in the repo
+attached_assets/
