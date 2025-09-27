@@ -1,0 +1,75 @@
+
+> rest-express@1.0.0 lint
+> eslint . --ext .ts,.tsx --fix --format=compact
+
+/home/runner/workspace/client/public/sw.js: line 8, col 1, Error - 'self' is not defined. (no-undef)
+/home/runner/workspace/client/public/sw.js: line 10, col 5, Error - 'caches' is not defined. (no-undef)
+/home/runner/workspace/client/public/sw.js: line 21, col 1, Error - 'self' is not defined. (no-undef)
+/home/runner/workspace/client/public/sw.js: line 23, col 5, Error - 'caches' is not defined. (no-undef)
+/home/runner/workspace/client/public/sw.js: line 35, col 18, Error - 'caches' is not defined. (no-undef)
+/home/runner/workspace/client/public/sw.js: line 42, col 1, Error - 'self' is not defined. (no-undef)
+/home/runner/workspace/client/public/sw.js: line 44, col 5, Error - 'caches' is not defined. (no-undef)
+/home/runner/workspace/client/public/sw.js: line 49, col 20, Error - 'caches' is not defined. (no-undef)
+/home/runner/workspace/client/src/components/KnowledgeBaseUploader.tsx: line 11, col 10, Error - 'apiRequest' is defined but never used. Allowed unused vars must match /^_/u. (@typescript-eslint/no-unused-vars)
+/home/runner/workspace/client/src/components/KnowledgeBaseUploader.tsx: line 50, col 34, Warning - Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+/home/runner/workspace/client/src/components/KnowledgeBaseUploader.tsx: line 71, col 15, Error - 'error' is defined but never used. Allowed unused args must match /^_/u. (@typescript-eslint/no-unused-vars)
+/home/runner/workspace/client/src/components/ProtectedRoute.tsx: line 12, col 11, Error - 'user' is assigned a value but never used. Allowed unused vars must match /^_/u. (@typescript-eslint/no-unused-vars)
+/home/runner/workspace/client/src/components/header.tsx: line 17, col 34, Error - 'onMenuClick' is defined but never used. Allowed unused args must match /^_/u. (@typescript-eslint/no-unused-vars)
+/home/runner/workspace/client/src/hooks/use-chat.ts: line 12, col 58, Error - 'topic' is defined but never used. Allowed unused args must match /^_/u. (@typescript-eslint/no-unused-vars)
+/home/runner/workspace/client/src/hooks/use-toast.ts: line 18, col 7, Error - 'actionTypes' is assigned a value but only used as a type. Allowed unused vars must match /^_/u. (@typescript-eslint/no-unused-vars)
+/home/runner/workspace/client/src/pages/analytics.tsx: line 214, col 67, Error - 'index' is defined but never used. Allowed unused args must match /^_/u. (@typescript-eslint/no-unused-vars)
+/home/runner/workspace/client/src/pages/conversations.tsx: line 39, col 48, Error - 'refetch' is assigned a value but never used. Allowed unused vars must match /^_/u. (@typescript-eslint/no-unused-vars)
+/home/runner/workspace/client/src/pages/knowledge-base.tsx: line 14, col 3, Error - 'Download' is defined but never used. Allowed unused vars must match /^_/u. (@typescript-eslint/no-unused-vars)
+/home/runner/workspace/client/src/pages/prompt-library.tsx: line 3, col 29, Error - 'CardDescription' is defined but never used. Allowed unused vars must match /^_/u. (@typescript-eslint/no-unused-vars)
+/home/runner/workspace/client/src/pages/prompt-library.tsx: line 3, col 58, Error - 'CardTitle' is defined but never used. Allowed unused vars must match /^_/u. (@typescript-eslint/no-unused-vars)
+/home/runner/workspace/client/src/pages/prompt-library.tsx: line 19, col 3, Error - 'Copy' is defined but never used. Allowed unused vars must match /^_/u. (@typescript-eslint/no-unused-vars)
+/home/runner/workspace/client/src/pages/prompt-library.tsx: line 21, col 3, Error - 'Settings' is defined but never used. Allowed unused vars must match /^_/u. (@typescript-eslint/no-unused-vars)
+/home/runner/workspace/client/src/pages/settings.tsx: line 18, col 3, Error - 'Bell' is defined but never used. Allowed unused vars must match /^_/u. (@typescript-eslint/no-unused-vars)
+/home/runner/workspace/client/src/pages/settings.tsx: line 47, col 14, Error - 'error' is defined but never used. (@typescript-eslint/no-unused-vars)
+/home/runner/workspace/server/auth-routes.ts: line 4, col 25, Error - 'hashPassword' is defined but never used. Allowed unused vars must match /^_/u. (@typescript-eslint/no-unused-vars)
+/home/runner/workspace/server/auth-routes.ts: line 5, col 10, Error - 'z' is defined but never used. Allowed unused vars must match /^_/u. (@typescript-eslint/no-unused-vars)
+/home/runner/workspace/server/auth.ts: line 4, col 15, Error - 'User' is defined but never used. Allowed unused vars must match /^_/u. (@typescript-eslint/no-unused-vars)
+/home/runner/workspace/server/auth.ts: line 25, col 12, Error - 'error' is defined but never used. (@typescript-eslint/no-unused-vars)
+/home/runner/workspace/server/auth.ts: line 45, col 13, Warning - Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+/home/runner/workspace/server/auth.ts: line 66, col 28, Warning - Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+/home/runner/workspace/server/auth.ts: line 73, col 13, Warning - Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+/home/runner/workspace/server/auth.ts: line 89, col 17, Warning - Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+/home/runner/workspace/server/auth.ts: line 94, col 12, Error - 'error' is defined but never used. (@typescript-eslint/no-unused-vars)
+/home/runner/workspace/server/index.ts: line 28, col 44, Warning - Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+/home/runner/workspace/server/index.ts: line 98, col 19, Warning - Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+/home/runner/workspace/server/middleware/auth.ts: line 14, col 22, Warning - Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+/home/runner/workspace/server/objectAcl.ts: line 18, col 10, Error - 'isPermissionAllowed' is defined but never used. Allowed unused vars must match /^_/u. (@typescript-eslint/no-unused-vars)
+/home/runner/workspace/server/routes.ts: line 7, col 3, Error - 'insertKnowledgeBaseFileSchema' is defined but never used. Allowed unused vars must match /^_/u. (@typescript-eslint/no-unused-vars)
+/home/runner/workspace/server/routes.ts: line 11, col 8, Error - 'Message' is defined but never used. Allowed unused vars must match /^_/u. (@typescript-eslint/no-unused-vars)
+/home/runner/workspace/server/routes.ts: line 12, col 8, Error - 'LGP360ReportData' is defined but never used. Allowed unused vars must match /^_/u. (@typescript-eslint/no-unused-vars)
+/home/runner/workspace/server/routes.ts: line 110, col 16, Error - 'authError' is defined but never used. (@typescript-eslint/no-unused-vars)
+/home/runner/workspace/server/routes.ts: line 338, col 30, Warning - Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+/home/runner/workspace/server/seed-admin.ts: line 67, col 13, Error - 'eq' is assigned a value but never used. Allowed unused vars must match /^_/u. (@typescript-eslint/no-unused-vars)
+/home/runner/workspace/server/services/openai.ts: line 58, col 49, Warning - Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+/home/runner/workspace/server/services/openai.ts: line 83, col 29, Warning - Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+/home/runner/workspace/server/services/openai.ts: line 102, col 42, Warning - Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+/home/runner/workspace/server/services/openai.ts: line 252, col 43, Error - 'index' is defined but never used. Allowed unused args must match /^_/u. (@typescript-eslint/no-unused-vars)
+/home/runner/workspace/server/services/openai.ts: line 424, col 43, Error - 'index' is defined but never used. Allowed unused args must match /^_/u. (@typescript-eslint/no-unused-vars)
+/home/runner/workspace/server/storage.ts: line 3, col 8, Error - 'InsertUser' is defined but never used. Allowed unused vars must match /^_/u. (@typescript-eslint/no-unused-vars)
+/home/runner/workspace/server/storage.ts: line 5, col 8, Error - 'LoginData' is defined but never used. Allowed unused vars must match /^_/u. (@typescript-eslint/no-unused-vars)
+/home/runner/workspace/server/storage.ts: line 13, col 3, Error - 'createUserSchema' is defined but never used. Allowed unused vars must match /^_/u. (@typescript-eslint/no-unused-vars)
+/home/runner/workspace/tests/a11y.spec.ts: line 0, col 0, Error - Parsing error: ESLint was configured to run on `<tsconfigRootDir>/tests/a11y.spec.ts` using `parserOptions.project`: <tsconfigRootDir>/tsconfig.json
+However, that TSConfig does not include this file. Either:
+- Change ESLint's list of included files to not include this file
+- Change that TSConfig to include this file
+- Create a new TSConfig that includes this file and include it in your parserOptions.project
+See the typescript-eslint docs for more info: https://typescript-eslint.io/troubleshooting/typed-linting#i-get-errors-telling-me-eslint-was-configured-to-run--however-that-tsconfig-does-not--none-of-those-tsconfigs-include-this-file
+/home/runner/workspace/tests/flow.spec.ts: line 0, col 0, Error - Parsing error: ESLint was configured to run on `<tsconfigRootDir>/tests/flow.spec.ts` using `parserOptions.project`: <tsconfigRootDir>/tsconfig.json
+However, that TSConfig does not include this file. Either:
+- Change ESLint's list of included files to not include this file
+- Change that TSConfig to include this file
+- Create a new TSConfig that includes this file and include it in your parserOptions.project
+See the typescript-eslint docs for more info: https://typescript-eslint.io/troubleshooting/typed-linting#i-get-errors-telling-me-eslint-was-configured-to-run--however-that-tsconfig-does-not--none-of-those-tsconfigs-include-this-file
+/home/runner/workspace/tests/pwa.spec.ts: line 0, col 0, Error - Parsing error: ESLint was configured to run on `<tsconfigRootDir>/tests/pwa.spec.ts` using `parserOptions.project`: <tsconfigRootDir>/tsconfig.json
+However, that TSConfig does not include this file. Either:
+- Change ESLint's list of included files to not include this file
+- Change that TSConfig to include this file
+- Create a new TSConfig that includes this file and include it in your parserOptions.project
+See the typescript-eslint docs for more info: https://typescript-eslint.io/troubleshooting/typed-linting#i-get-errors-telling-me-eslint-was-configured-to-run--however-that-tsconfig-does-not--none-of-those-tsconfigs-include-this-file
+
+54 problems

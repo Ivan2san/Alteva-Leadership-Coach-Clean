@@ -38,7 +38,7 @@ describe('Chat Integration', () => {
     return render(
       <QueryClientProvider client={queryClient}>
         <Router>
-          <Chat />
+          <Chat params={{ topic: "leadership" }} />
           <Toaster />
         </Router>
       </QueryClientProvider>

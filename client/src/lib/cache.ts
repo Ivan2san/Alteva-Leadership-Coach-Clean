@@ -69,12 +69,9 @@ class Cache {
   cleanup(): void {
     const now = Date.now();
 
-    for (const [key, item] of this.storage.entries()) {
-      const age = now - item.timestamp;
-      if (age > item.ttl) {
-        this.storage.delete(key);
-      }
-    }
+    this.storage.forEach((item, key) => {
+    // ...existing body (unchanged)...
+    });
   }
 
   size(): number {
