@@ -1,0 +1,1 @@
+Try this in your terminal outside Replit:\n\ngit clone https://github.com/YOUR_REPO_URL temp-fix\ncd temp-fix\ngit checkout -b fix-branch

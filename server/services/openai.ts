@@ -127,62 +127,59 @@ export class OpenAIService {
   }
 
   /** Searches the knowledge base for relevant content */
-  async searchKnowledgeBase(query: string, maxResults = 5): Promise<KnowledgeSearchResult[]> {
+  async searchKnowledgeBase(query: string): Promise<string | null> {
+    const vectorStoreId = process.env.OPENAI_VECTOR_STORE_ID;
+    if (!vectorStoreId) {
+      return null;
+    }
+
     try {
-      // Import storage here to avoid circular dependency
-      const { storage } = await import("../storage");
-      
-      // Get all processed knowledge base files
-      const files = await storage.getKnowledgeBaseFiles();
-      const processedFiles = files.filter(file => file.isProcessed && file.extractedText);
-      
-      if (processedFiles.length === 0) {
-        console.log("No processed knowledge base files available for search");
-        return [];
-      }
-      
-      // Simple text-based search (in production, you'd use more sophisticated search)
-      const searchResults: KnowledgeSearchResult[] = [];
-      const queryLower = query.toLowerCase();
-      
-      for (const file of processedFiles) {
-        if (file.extractedText) {
-          const content = file.extractedText.toLowerCase();
-          
-          // Calculate relevance based on query term frequency
-          const queryTerms = queryLower.split(/\s+/);
-          let relevance = 0;
-          
-          for (const term of queryTerms) {
-            const matches = (content.match(new RegExp(term, 'g')) || []).length;
-            relevance += matches;
-          }
-          
-          if (relevance > 0) {
-            // Extract a relevant snippet around the first match
-            const firstMatchIndex = content.indexOf(queryTerms[0]);
-            const snippetStart = Math.max(0, firstMatchIndex - 100);
-            const snippetEnd = Math.min(file.extractedText.length, firstMatchIndex + 200);
-            const snippet = file.extractedText.substring(snippetStart, snippetEnd);
-            
-            searchResults.push({
-              content: snippet,
-              source: file.originalName,
-              relevance: relevance / queryTerms.length // Normalize by number of terms
-            });
+      // Create a thread for knowledge base search
+      const thread = await openai.beta.threads.create();
+
+      // Add the search query
+      await openai.beta.threads.messages.create(thread.id, {
+        role: "user",
+        content: query
+      });
+
+      // Create assistant with vector store
+      const assistant = await openai.beta.assistants.create({
+        name: "Knowledge Base Search",
+        instructions: "You are a helpful assistant that searches through uploaded knowledge base files to find relevant information. Provide concise, relevant excerpts that answer the user's query.",
+        model: "gpt-4o-mini",
+        tools: [{ type: "file_search" }],
+        tool_resources: {
+          file_search: {
+            vector_store_ids: [vectorStoreId]
           }
         }
+      });
+
+      // Run the assistant
+      const run = await openai.beta.threads.runs.create(thread.id, {
+        assistant_id: assistant.id
+      });
+
+      // Wait for completion
+      let runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
+      while (runStatus.status === 'in_progress' || runStatus.status === 'queued') {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
       }
-      
-      // Sort by relevance and return top results
-      searchResults.sort((a, b) => b.relevance - a.relevance);
-      const results = searchResults.slice(0, maxResults);
-      
-      console.log(`Knowledge base search for "${query}" returned ${results.length} results`);
-      return results;
+
+      if (runStatus.status === 'completed') {
+        const messages = await openai.beta.threads.messages.list(thread.id);
+        const assistantMessage = messages.data.find(msg => msg.role === 'assistant');
+        if (assistantMessage && assistantMessage.content[0].type === 'text') {
+          return assistantMessage.content[0].text.value;
+        }
+      }
+
+      return null;
     } catch (error) {
-      console.error("Error searching knowledge base:", error);
-      return [];
+      console.error('Knowledge base search error:', error);
+      return null;
     }
   }
 
@@ -244,15 +241,14 @@ Current focus area: ${topic}
 ${userLGP360Data ? this.generatePersonalizationContext(userLGP360Data) : ''}`;
 
       // Search knowledge base for relevant context
-      const knowledgeResults = await this.searchKnowledgeBase(userPrompt);
-      let contextAddition = '';
-      
-      if (knowledgeResults.length > 0) {
-        contextAddition = '\n\n## 📚 Relevant Knowledge Base Information\n\n';
-        knowledgeResults.forEach((result, index) => {
-          contextAddition += `**Source: ${result.source}**\n${result.content}\n\n`;
-        });
-        contextAddition += '---\n\nUse this information to enhance your coaching response when relevant.\n';
+      let knowledgeBaseContext = '';
+      try {
+        const kbResult = await this.searchKnowledgeBase(userPrompt);
+        if (kbResult) {
+          knowledgeBaseContext = `\n\nRelevant knowledge base information:\n${kbResult}`;
+        }
+      } catch (error) {
+        console.log('Knowledge base search failed:', error);
       }
 
       // Transform conversation history to single input string format
@@ -263,7 +259,7 @@ ${userLGP360Data ? this.generatePersonalizationContext(userLGP360Data) : ''}`;
       }
 
       // Create single input string for Responses API
-      const input = `${systemPrompt}${contextAddition}\n\n${conversationText}User: ${userPrompt}`;
+      const input = `${systemPrompt}${knowledgeBaseContext}\n\n${conversationText}User: ${userPrompt}`;
 
       console.log(`Streaming chat prompt length: ${input.length} characters`);
 
@@ -416,15 +412,14 @@ Current focus area: ${topic}
 ${userLGP360Data ? this.generatePersonalizationContext(userLGP360Data) : ''}`;
 
       // Search knowledge base for relevant context
-      const knowledgeResults = await this.searchKnowledgeBase(userPrompt);
-      let contextAddition = '';
-      
-      if (knowledgeResults.length > 0) {
-        contextAddition = '\n\n## 📚 Relevant Knowledge Base Information\n\n';
-        knowledgeResults.forEach((result, index) => {
-          contextAddition += `**Source: ${result.source}**\n${result.content}\n\n`;
-        });
-        contextAddition += '---\n\nUse this information to enhance your coaching response when relevant.\n';
+      let knowledgeBaseContext = '';
+      try {
+        const kbResult = await this.searchKnowledgeBase(userPrompt);
+        if (kbResult) {
+          knowledgeBaseContext = `\n\nRelevant knowledge base information:\n${kbResult}`;
+        }
+      } catch (error) {
+        console.log('Knowledge base search failed:', error);
       }
 
       // Transform conversation history to single input string format
@@ -436,7 +431,7 @@ ${userLGP360Data ? this.generatePersonalizationContext(userLGP360Data) : ''}`;
       }
 
       // Create single input string for Responses API
-      const input = `${systemPrompt}${contextAddition}\n\n${conversationText}User: ${userPrompt}`;
+      const input = `${systemPrompt}${knowledgeBaseContext}\n\n${conversationText}User: ${userPrompt}`;
 
       // Calculate total prompt length for debugging
       const totalPromptLength = input.length;
@@ -451,7 +446,7 @@ ${userLGP360Data ? this.generatePersonalizationContext(userLGP360Data) : ''}`;
 
       // Process response using new API shape as per template guidance
       const aiMessage = response.output_text ?? response.output?.[0]?.content?.[0]?.text ?? "";
-      
+
       if (!aiMessage || aiMessage.trim() === '') {
         console.error("Empty response from OpenAI Responses API. Response details:", {
           hasOutputText: !!response.output_text,
@@ -476,10 +471,10 @@ ${userLGP360Data ? this.generatePersonalizationContext(userLGP360Data) : ''}`;
     if (!lgp360Data.assessment) {
       return '';
     }
-    
+
     // Extract key insights from assessment to avoid token overflow
     const assessmentSummary = this.extractKeyInsights(lgp360Data.assessment);
-    
+
     return `
 ## 👤 USER PERSONALIZATION CONTEXT
 
@@ -501,7 +496,7 @@ Make coaching personal and relevant to their unique leadership context while mai
   private extractKeyInsights(assessment: string): string {
     // Limit assessment to key sections, max 1000 characters
     const maxLength = 1000;
-    
+
     if (assessment.length <= maxLength) {
       return assessment;
     }
@@ -509,7 +504,7 @@ Make coaching personal and relevant to their unique leadership context while mai
     // Try to extract key sections like Executive Overview, Leadership Analysis, etc.
     const sections = assessment.split(/\*\*(.*?)\*\*/);
     let summary = '';
-    
+
     for (let i = 0; i < sections.length && summary.length < maxLength; i++) {
       const section = sections[i];
       if (section && (
@@ -526,49 +521,84 @@ Make coaching personal and relevant to their unique leadership context while mai
         }
       }
     }
-    
+
     // Fallback: take first part of assessment
     if (!summary) {
       summary = assessment.substring(0, maxLength) + '...';
     }
-    
+
     return summary;
   }
 
-  async getTopicSpecificResponse(
-    userInput: string,
-    topic: string,
-    conversationHistory: HistoryItem[] = [],
-    userLGP360Data?: LGP360ReportData
-  ): Promise<ChatResponse> {
-    const altevaTopicInstructions: Record<string, string> = {
-      "growth-profile":
-        "Focus on helping identify their current leadership identity and growth edge. Use Red/Green Zone awareness to surface reactive patterns. Guide toward values-based leadership strengths and development areas.",
-      "red-green-zones":
-        "Help them recognize specific triggers that shift them into reactive mode (Red Zone) vs. connected, values-driven leadership (Green Zone). Focus on pattern recognition and values-based recovery strategies.",
-      "big-practice":
-        "Guide discovery and implementation of their One Big Practice (OBP) - the single leadership practice with highest impact. Focus on sustainable integration and daily embodiment.",
-      "360-report":
-        "Support interpretation of feedback through the lens of Red/Green Zone patterns. Help identify growth edges and create accountable development commitments using OORA framework.",
-      "growth-values":
-        "Help surface and embody core growth values in daily leadership. Focus on values-based decision making and authentic leadership expression. Address shadow work where values conflict.",
-      "growth-matrix":
-        "Support creation of integrated vertical development matrix. Focus on identity-level growth, not just skill building. Prioritize practices that stretch their leadership maturity.",
-      "oora-conversation":
-        "Guide preparation for Accountable Conversations using OORA framework. Focus on Mindset (intention, values, awareness) alongside structure. Practice truth + care approach.",
-      "daily-checkin":
-        "Facilitate daily reflection on OBP integration, values alignment, and Red/Green Zone awareness. Focus on patterns, learning, and next-level leadership identity.",
+  async getTopicSpecificResponse(message: string, topic: string, conversationHistory: HistoryItem[] = [], userLGP360Data?: { assessment: any; originalContent?: string }): Promise<{ reply: string }> {
+    const topicConfig = {
+      name: topic,
+      systemPrompt: `You are a leadership coach specializing in the Alteva Growth methodology. Your goal is to help leaders grow by focusing on their challenges and development areas.`,
     };
 
-    const altevaInstruction =
-      altevaTopicInstructions[topic] ?? altevaTopicInstructions["growth-profile"];
+    switch (topic) {
+      case "growth-profile":
+        topicConfig.systemPrompt = `You are a leadership coach specializing in the Alteva Growth methodology. Focus on helping participants identify their current leadership identity and growth edge. Use Red/Green Zone awareness to surface reactive patterns. Guide them toward values-based leadership strengths and development areas.`;
+        break;
+      case "red-green-zones":
+        topicConfig.systemPrompt = `You are a leadership coach specializing in the Alteva Growth methodology. Help participants recognize specific triggers that shift them into reactive mode (Red Zone) vs. connected, values-driven leadership (Green Zone). Focus on pattern recognition and values-based recovery strategies.`;
+        break;
+      case "big-practice":
+        topicConfig.systemPrompt = `You are a leadership coach specializing in the Alteva Growth methodology. Guide the discovery and implementation of their One Big Practice (OBP) - the single leadership practice with the highest impact. Focus on sustainable integration and daily embodiment.`;
+        break;
+      case "360-report":
+        topicConfig.systemPrompt = `You are a leadership coach specializing in the Alteva Growth methodology. Support the interpretation of feedback through the lens of Red/Green Zone patterns. Help identify growth edges and create accountable development commitments using the OORA framework.`;
+        break;
+      case "growth-values":
+        topicConfig.systemPrompt = `You are a leadership coach specializing in the Alteva Growth methodology. Help surface and embody core growth values in daily leadership. Focus on values-based decision making and authentic leadership expression. Address shadow work where values conflict.`;
+        break;
+      case "growth-matrix":
+        topicConfig.systemPrompt = `You are a leadership coach specializing in the Alteva Growth methodology. Support the creation of an integrated vertical development matrix. Focus on identity-level growth, not just skill building. Prioritize practices that stretch their leadership maturity.`;
+        break;
+      case "oora-conversation":
+        topicConfig.systemPrompt = `You are a leadership coach specializing in the Alteva Growth methodology. Guide preparation for Accountable Conversations using the OORA framework. Focus on Mindset (intention, values, awareness) alongside structure. Practice the truth + care approach.`;
+        break;
+      case "daily-checkin":
+        topicConfig.systemPrompt = `You are a leadership coach specializing in the Alteva Growth methodology. Facilitate daily reflection on OBP integration, values alignment, and Red/Green Zone awareness. Focus on patterns, learning, and next-level leadership identity.`;
+        break;
+      default:
+        topicConfig.systemPrompt = `You are a leadership coach specializing in the Alteva Growth methodology. Your goal is to help leaders grow by focusing on their challenges and development areas.`;
+    }
 
-    return this.getLeadershipResponse(
-      userInput,
-      `${topic}: ${altevaInstruction}`,
-      conversationHistory,
-      userLGP360Data
-    );
+    // Search knowledge base for relevant context
+    let knowledgeBaseContext = '';
+    try {
+      const kbResult = await this.searchKnowledgeBase(message);
+      if (kbResult) {
+        knowledgeBaseContext = `\n\nRelevant knowledge base information:\n${kbResult}`;
+      }
+    } catch (error) {
+      console.log('Knowledge base search failed:', error);
+    }
+
+    // Transform conversation history to single input string format
+    let conversationContext = '';
+    for (const msg of conversationHistory) {
+      const role = msg.sender === "user" ? "User" : "Assistant";
+      conversationContext += `${role}: ${msg.text}\n\n`;
+    }
+
+    // Construct the prompt
+    const promptContent = `${topicConfig.systemPrompt}${userLGP360Data ? this.generatePersonalizationContext(userLGP360Data) : ''}${knowledgeBaseContext}
+
+Current topic: ${topicConfig.name}
+
+Previous conversation:
+${conversationContext}
+
+User: ${message}
+
+Please provide a helpful, practical response focused on ${topicConfig.name.toLowerCase()}. Keep your response conversational and actionable.`;
+
+    // Get the AI response
+    const response = await this.getLeadershipResponse(message, topicConfig.name, conversationHistory, userLGP360Data);
+
+    return response;
   }
 
   /** Analyzes uploaded document and creates professional coaching assessment */
@@ -579,13 +609,13 @@ Make coaching personal and relevant to their unique leadership context while mai
     try {
       // Convert buffer to text based on file type
       let documentText = '';
-      
+
       if (mimeType === 'text/plain') {
         documentText = fileBuffer.toString('utf-8');
       } else if (mimeType === 'application/pdf') {
         // For demo purposes, create realistic sample content for PDF
         documentText = `Leadership Assessment Report
-        
+
 Name: John Smith
 Current Role: Senior Manager
 Organization: TechCorp Inc.
@@ -625,7 +655,7 @@ Learning Preferences: Case studies, peer learning, hands-on practice`;
       } else {
         // For Word docs, create realistic sample content
         documentText = `360-Degree Feedback Report
-        
+
 Employee: Sarah Johnson
 Position: Director of Operations
 Department: Operations
@@ -716,7 +746,7 @@ Write this as a professional, executive-level coaching assessment that flows nat
 
       // Process response using new API shape as per template guidance
       const assessment = assessmentResponse.output_text ?? assessmentResponse.output?.[0]?.content?.[0]?.text ?? "";
-      
+
       if (!assessment || assessment.trim() === '') {
         throw new Error("Empty assessment response from Responses API");
       }
@@ -729,7 +759,7 @@ Write this as a professional, executive-level coaching assessment that flows nat
         originalContent: documentText,
         assessment: assessment.trim()
       };
-      
+
     } catch (error) {
       console.error("Error analyzing document:", error);
       throw new Error("Failed to analyze document with AI");
@@ -738,4 +768,3 @@ Write this as a professional, executive-level coaching assessment that flows nat
 }
 
 export const openaiService = new OpenAIService();
-

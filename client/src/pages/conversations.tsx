@@ -14,7 +14,16 @@ import {
   Trash2,
   Calendar,
   Clock,
-  MoreVertical
+  MoreVertical,
+  TrendingUp,
+  Target,
+  PieChart,
+  Heart,
+  Grid3x3,
+  MessageCircle,
+  CalendarCheck,
+  User,
+  AlertTriangle
 } from "lucide-react";
 import { 
   DropdownMenu,
@@ -32,6 +41,7 @@ import type { Conversation } from "@shared/schema";
 export default function ConversationsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("active");
+  const [selectedTopic, setSelectedTopic] = useState<string>("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -95,9 +105,20 @@ export default function ConversationsPage() {
     },
   });
 
-  const formatDate = (date: string | Date | null) => {
+  const formatRelativeTime = (date: string | Date | null) => {
     if (!date) return 'Unknown';
-    return new Date(date).toLocaleDateString();
+    const now = new Date();
+    const then = new Date(date);
+    const diffMs = now.getTime() - then.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return then.toLocaleDateString();
   };
 
   const formatTime = (date: string | Date | null) => {
@@ -106,7 +127,38 @@ export default function ConversationsPage() {
   };
 
   const getTopicConfig = (topic: string) => {
-    return topicConfigurations[topic] || { title: topic, icon: "💬", color: "blue" };
+    const config = topicConfigurations[topic];
+    if (!config) return { title: topic, icon: MessageCircle, color: "blue", bgColor: "bg-blue-50", borderColor: "border-blue-200", textColor: "text-blue-700" };
+    
+    const iconMap: Record<string, any> = {
+      'fa-user-chart': User,
+      'fa-traffic-light': AlertTriangle,
+      'fa-target': Target,
+      'fa-chart-pie': PieChart,
+      'fa-heart': Heart,
+      'fa-th': Grid3x3,
+      'fa-comments': MessageCircle,
+      'fa-calendar-check': CalendarCheck,
+    };
+    
+    const colorMap: Record<string, { color: string; bgColor: string; borderColor: string; textColor: string }> = {
+      'growth-profile': { color: 'purple', bgColor: 'bg-purple-50', borderColor: 'border-purple-200', textColor: 'text-purple-700' },
+      'red-green-zones': { color: 'amber', bgColor: 'bg-amber-50', borderColor: 'border-amber-200', textColor: 'text-amber-700' },
+      'big-practice': { color: 'blue', bgColor: 'bg-blue-50', borderColor: 'border-blue-200', textColor: 'text-blue-700' },
+      '360-report': { color: 'green', bgColor: 'bg-green-50', borderColor: 'border-green-200', textColor: 'text-green-700' },
+      'growth-values': { color: 'rose', bgColor: 'bg-rose-50', borderColor: 'border-rose-200', textColor: 'text-rose-700' },
+      'growth-matrix': { color: 'indigo', bgColor: 'bg-indigo-50', borderColor: 'border-indigo-200', textColor: 'text-indigo-700' },
+      'oora-conversation': { color: 'teal', bgColor: 'bg-teal-50', borderColor: 'border-teal-200', textColor: 'text-teal-700' },
+      'daily-checkin': { color: 'orange', bgColor: 'bg-orange-50', borderColor: 'border-orange-200', textColor: 'text-orange-700' },
+    };
+    
+    const colors = colorMap[topic] || { color: 'gray', bgColor: 'bg-gray-50', borderColor: 'border-gray-200', textColor: 'text-gray-700' };
+    
+    return {
+      title: config.title,
+      icon: iconMap[config.icon] || MessageCircle,
+      ...colors
+    };
   };
 
   const handleExport = (conversationId: string, format: 'json' | 'txt') => {
@@ -119,13 +171,17 @@ export default function ConversationsPage() {
     }
   };
 
-  // Filter conversations based on search
-  const filteredConversations = conversations.filter(conv => 
-    !searchQuery || 
-    conv.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    conv.summary?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    conv.topic.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filter conversations based on search and topic
+  const filteredConversations = conversations.filter(conv => {
+    const matchesSearch = !searchQuery || 
+      conv.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      conv.summary?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      conv.topic.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesTopic = !selectedTopic || conv.topic === selectedTopic;
+    
+    return matchesSearch && matchesTopic;
+  });
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -150,33 +206,81 @@ export default function ConversationsPage() {
           {/* Search and Filters */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span className="flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <CardTitle className="flex items-center gap-2 mb-0">
                   <MessageSquare className="h-5 w-5" />
                   Conversations ({filteredConversations.length})
-                </span>
+                </CardTitle>
                 <Link href="/prompts/growth-profile">
-                  <Button data-testid="new-conversation-button">
-                    Start New Conversation
+                  <Button data-testid="new-conversation-button" className="w-full sm:w-auto">
+                    <span className="sm:hidden">New Chat</span>
+                    <span className="hidden sm:inline">Start New Conversation</span>
                   </Button>
                 </Link>
-              </CardTitle>
+              </div>
               <CardDescription>
                 Your coaching conversation history and analytics
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex gap-4 mb-6">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Search conversations by title, topic, or content..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                    data-testid="search-conversations"
-                  />
+              <div className="space-y-4 mb-6">
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="Search conversations by title, topic, or content..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10"
+                      data-testid="search-conversations"
+                    />
+                  </div>
+                  <select
+                    value={selectedTopic}
+                    onChange={(e) => setSelectedTopic(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:border-gray-600"
+                    data-testid="topic-filter"
+                  >
+                    <option value="">All Topics</option>
+                    {Object.entries(topicConfigurations).map(([key, config]) => (
+                      <option key={key} value={key}>{config.title}</option>
+                    ))}
+                  </select>
                 </div>
+                
+                {(searchQuery || selectedTopic) && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <span>Filters active:</span>
+                    {searchQuery && (
+                      <Badge variant="secondary" className="gap-1">
+                        Search: "{searchQuery}"
+                        <button 
+                          onClick={() => setSearchQuery("")}
+                          className="ml-1 hover:bg-gray-300 rounded-full w-4 h-4 flex items-center justify-center text-xs"
+                        >
+                          ×
+                        </button>
+                      </Badge>
+                    )}
+                    {selectedTopic && (
+                      <Badge variant="secondary" className="gap-1">
+                        Topic: {topicConfigurations[selectedTopic]?.title}
+                        <button 
+                          onClick={() => setSelectedTopic("")}
+                          className="ml-1 hover:bg-gray-300 rounded-full w-4 h-4 flex items-center justify-center text-xs"
+                        >
+                          ×
+                        </button>
+                      </Badge>
+                    )}
+                    <button 
+                      onClick={() => { setSearchQuery(""); setSelectedTopic(""); }}
+                      className="text-blue-600 hover:text-blue-800 font-medium"
+                    >
+                      Clear all
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Conversations Grid */}
@@ -204,29 +308,35 @@ export default function ConversationsPage() {
                   )}
                 </div>
               ) : (
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   {filteredConversations.map((conversation) => {
                     const topicConfig = getTopicConfig(conversation.topic);
                     const messageCount = conversation.messageCount || 0;
                     const messages = Array.isArray(conversation.messages) ? conversation.messages : [];
                     const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
+                    const IconComponent = topicConfig.icon;
                     
                     return (
-                      <Card key={conversation.id} className="hover:shadow-md transition-shadow">
-                        <CardHeader className="pb-3">
+                      <Card key={conversation.id} className={`hover:shadow-lg transition-all duration-200 hover:-translate-y-1 border-l-4 ${topicConfig.borderColor} ${topicConfig.bgColor}`}>
+                        <CardHeader className="pb-4">
                           <div className="flex items-start justify-between">
-                            <div className="flex items-center gap-3 min-w-0 flex-1">
-                              <div className="text-2xl">{topicConfig.icon}</div>
+                            <div className="flex items-start gap-4 min-w-0 flex-1">
+                              <div className={`p-3 rounded-lg ${topicConfig.bgColor} border ${topicConfig.borderColor}`}>
+                                <IconComponent className={`h-6 w-6 ${topicConfig.textColor}`} />
+                              </div>
                               <div className="min-w-0 flex-1">
-                                <h3 className="font-medium truncate" title={conversation.title || conversation.topic}>
+                                <h3 className="font-semibold text-lg leading-tight mb-2" title={conversation.title || conversation.topic}>
                                   {conversation.title || `${topicConfig.title} Session`}
                                 </h3>
-                                <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
-                                  <Badge variant="outline" className="text-xs">
+                                <div className="flex items-center gap-3">
+                                  <Badge className={`${topicConfig.textColor} ${topicConfig.bgColor} border ${topicConfig.borderColor} font-medium`}>
                                     {topicConfig.title}
                                   </Badge>
                                   {conversation.isStarred && (
-                                    <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                    <div className="flex items-center gap-1">
+                                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                                      <span className="text-xs text-yellow-600 font-medium">Starred</span>
+                                    </div>
                                   )}
                                 </div>
                               </div>
@@ -275,42 +385,51 @@ export default function ConversationsPage() {
                             </DropdownMenu>
                           </div>
                         </CardHeader>
-                        <CardContent className="pt-0">
+                        <CardContent className="pt-0 space-y-4">
                           {conversation.summary && (
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
+                            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed line-clamp-3">
                               {conversation.summary}
                             </p>
                           )}
                           
                           {lastMessage && (
-                            <div className="text-xs text-gray-500 mb-3 p-2 bg-gray-50 dark:bg-gray-800 rounded">
-                              <span className="font-medium">{lastMessage.sender === 'user' ? 'You' : 'AI'}:</span> {lastMessage.text.substring(0, 100)}...
+                            <div className="p-3 bg-white/60 dark:bg-gray-800/60 rounded-lg border border-gray-200/50">
+                              <div className="flex items-start gap-2">
+                                <div className={`w-2 h-2 rounded-full mt-2 ${lastMessage.sender === 'user' ? 'bg-blue-500' : 'bg-green-500'}`}></div>
+                                <div className="flex-1">
+                                  <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                                    {lastMessage.sender === 'user' ? 'Your message' : 'AI response'}
+                                  </div>
+                                  <p className="text-sm text-gray-800 dark:text-gray-200 line-clamp-2">
+                                    {lastMessage.text.substring(0, 120)}{lastMessage.text.length > 120 ? '...' : ''}
+                                  </p>
+                                </div>
+                              </div>
                             </div>
                           )}
 
-                          <div className="flex items-center justify-between text-xs text-gray-500">
-                            <div className="flex items-center gap-3">
-                              <div className="flex items-center gap-1">
-                                <MessageSquare className="h-3 w-3" />
-                                {messageCount} messages
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4 text-sm text-gray-600">
+                              <div className="flex items-center gap-1.5">
+                                <MessageSquare className="h-4 w-4" />
+                                <span className="font-medium">{messageCount}</span>
+                                <span className="text-gray-500">messages</span>
                               </div>
-                              <div className="flex items-center gap-1">
-                                <Calendar className="h-3 w-3" />
-                                {formatDate(conversation.createdAt)}
+                              <div className="flex items-center gap-1.5">
+                                <Clock className="h-4 w-4" />
+                                <span className="font-medium">{formatRelativeTime(conversation.lastMessageAt || conversation.createdAt)}</span>
                               </div>
                             </div>
-                            {conversation.lastMessageAt && (
-                              <div className="flex items-center gap-1">
-                                <Clock className="h-3 w-3" />
-                                {formatTime(conversation.lastMessageAt)}
-                              </div>
-                            )}
                           </div>
 
-                          <div className="mt-3 pt-3 border-t">
+                          <div className="pt-2">
                             <Link href={`/chat/${conversation.topic}?resumeId=${conversation.id}`}>
-                              <Button variant="outline" size="sm" className="w-full" data-testid={`resume-conversation-${conversation.id}`}>
-                                Resume Conversation
+                              <Button 
+                                className={`w-full font-medium ${topicConfig.textColor} ${topicConfig.bgColor} border ${topicConfig.borderColor} hover:opacity-90`} 
+                                variant="outline" 
+                                data-testid={`resume-conversation-${conversation.id}`}
+                              >
+                                Continue Conversation
                               </Button>
                             </Link>
                           </div>
