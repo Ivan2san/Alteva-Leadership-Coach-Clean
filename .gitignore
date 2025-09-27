@@ -1,27 +1,50 @@
-# Dependencies
+# Node / build
 node_modules/
-.pnpm-store/
-.yarn/
-.yarn/cache/
-
-# Build & output
 dist/
 build/
-.next/
-.turbo/
-.vercel/
 coverage/
+.nyc_output/
+*.tsbuildinfo
+*.map
+
+# Framework & tooling
+.vite/
+.vitest/
 playwright-report/
 test-results/
+.parcel-cache/
+.npm/
+.cache/
+.next/
 
-# Env & secrets
+# Env
 .env
 .env.*
+!.env.example
 
-# OS/editor noise
-.DS_Store
+# Logs & pids
+logs/
 *.log
-*.log.*
+server.log
+*.pid
+*.pid.lock
+server.pid
 
-# Local artifacts that don’t belong in the repo
-attached_assets/
+# Editors & OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Replit artifacts
+.repl_history
+
+# App-specific runtime
+uploads/
+storage/
+vector_index/
+knowledge_store/
+tmp/
+.temp/
+drizzle/*-journal
+pgdata/
