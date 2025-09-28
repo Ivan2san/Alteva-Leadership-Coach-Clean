@@ -11,4 +11,4 @@ jobs:
         with: { node-version: 20 }
       - run: npm ci
       - run: npx playwright install --with-deps
-      - run: E2E_BASE_URL="${{ secrets.PRODUCTION_URL }}" npx playwright test tests/flow.spec.ts --reporter=line
+      - run: E2E_BASE_URL="${{ secrets.PRODUCTION_URL }}" npx playwright test tests/status.spec.ts --reporter=line
