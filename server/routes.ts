@@ -17,8 +17,82 @@ import { authenticateUser } from "./middleware/auth";
 import cookieParser from "cookie-parser";
 import multer from "multer";
 import { z } from "zod";
+import * as yauzl from "yauzl";
 
 // Function to process uploaded files for knowledge base integration
+async function processZipFile(fileId: string, filePath: string): Promise<string[]> {
+  return new Promise((resolve, reject) => {
+    const extractedTexts: string[] = [];
+    
+    yauzl.open(filePath, { lazyEntries: true }, (err, zipfile) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      
+      if (!zipfile) {
+        reject(new Error('Failed to open zip file'));
+        return;
+      }
+      
+      zipfile.readEntry();
+      
+      zipfile.on("entry", (entry) => {
+        if (/\/$/.test(entry.fileName)) {
+          // Directory entry, skip
+          zipfile.readEntry();
+        } else {
+          // File entry
+          const fileName = entry.fileName.toLowerCase();
+          if (fileName.endsWith('.txt') || fileName.endsWith('.md') || 
+              fileName.endsWith('.pdf') || fileName.endsWith('.doc') || 
+              fileName.endsWith('.docx')) {
+            
+            zipfile.openReadStream(entry, (err, readStream) => {
+              if (err) {
+                console.error(`Error reading ${entry.fileName}:`, err);
+                zipfile.readEntry();
+                return;
+              }
+              
+              if (!readStream) {
+                zipfile.readEntry();
+                return;
+              }
+              
+              const chunks: Buffer[] = [];
+              readStream.on('data', (chunk) => chunks.push(chunk));
+              readStream.on('end', () => {
+                const content = Buffer.concat(chunks);
+                if (fileName.endsWith('.txt') || fileName.endsWith('.md')) {
+                  extractedTexts.push(`File: ${entry.fileName}\n${content.toString('utf-8')}`);
+                } else {
+                  extractedTexts.push(`File: ${entry.fileName}\nBinary content extracted`);
+                }
+                zipfile.readEntry();
+              });
+              readStream.on('error', (err) => {
+                console.error(`Error reading stream for ${entry.fileName}:`, err);
+                zipfile.readEntry();
+              });
+            });
+          } else {
+            zipfile.readEntry();
+          }
+        }
+      });
+      
+      zipfile.on("end", () => {
+        resolve(extractedTexts);
+      });
+      
+      zipfile.on("error", (err) => {
+        reject(err);
+      });
+    });
+  });
+}
+
 async function processFileForKnowledgeBase(fileId: string, filePath: string, mimeType: string): Promise<void> {
   try {
     console.log(`Processing file ${fileId} for knowledge base integration...`);
@@ -35,14 +109,31 @@ async function processFileForKnowledgeBase(fileId: string, filePath: string, mim
     } else if (mimeType === 'application/pdf') {
       // For PDFs, you'd use a PDF parsing library
       extractedText = `PDF content extracted from ${filePath}`;
+    } else if (mimeType === 'application/zip' || mimeType === 'application/x-zip-compressed') {
+      // For ZIP files, extract and process contained files
+      try {
+        const extractedTexts = await processZipFile(fileId, filePath);
+        extractedText = extractedTexts.join('\n\n---\n\n');
+        console.log(`Extracted ${extractedTexts.length} files from zip`);
+      } catch (zipError) {
+        console.error(`Error processing zip file ${fileId}:`, zipError);
+        extractedText = `Zip file processing failed: ${zipError instanceof Error ? zipError.message : 'Unknown error'}`;
+      }
     } else {
       extractedText = `Document content from ${filePath}`;
+    }
+    
+    // Upload to vector store if configured
+    let vectorStoreFileId = null;
+    if (extractedText.trim()) {
+      vectorStoreFileId = await openaiService.uploadToVectorStore(extractedText, `kb_${fileId}.txt`);
     }
     
     // Store the extracted text content for search
     await storage.updateKnowledgeBaseFile(fileId, { 
       isProcessed: true,
       extractedText: extractedText,
+      vectorStoreFileId: vectorStoreFileId,
       processedAt: new Date()
     });
     
@@ -67,7 +158,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'application/pdf',
         'text/plain',
         'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/zip',
+        'application/x-zip-compressed'
       ];
       cb(null, allowedTypes.includes(file.mimetype));
     },
