@@ -37,9 +37,10 @@ export function usePerformance(componentName?: string) {
     if ('memory' in performance) {
       const memory = (performance as Performance & { memory?: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number } }).memory;
       return {
-        used: memory.usedJSHeapSize,
-        total: memory.totalJSHeapSize,
-        limit: memory.jsHeapSizeLimit,
+        // Some browsers don’t expose performance.memory. Be an adult about it.
+        used: memory?.usedJSHeapSize ?? 0,
+        total: memory?.totalJSHeapSize ?? 0,
+        limit: memory?.jsHeapSizeLimit ?? 0,
       };
     }
     return null;

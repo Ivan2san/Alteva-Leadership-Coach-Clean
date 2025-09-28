@@ -2,14 +2,11 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { openaiService } from "./services/openai";
-import { 
-  insertConversationSchema, 
-  insertKnowledgeBaseFileSchema,
+import {
+  insertConversationSchema,
   insertPromptTemplateSchema,
   lgp360ReportSchema,
-  messageSchema, 
-  type Message,
-  type LGP360ReportData
+  messageSchema,
 } from "@shared/schema";
 import { ObjectStorageService } from "./objectStorage";
 import { registerAuthRoutes } from "./auth-routes";
@@ -18,25 +15,26 @@ import cookieParser from "cookie-parser";
 import multer from "multer";
 import { z } from "zod";
 import * as yauzl from "yauzl";
+import { Buffer } from "node:buffer";
 
 // Function to process uploaded files for knowledge base integration
 async function processZipFile(fileId: string, filePath: string): Promise<string[]> {
   return new Promise((resolve, reject) => {
     const extractedTexts: string[] = [];
-    
+
     yauzl.open(filePath, { lazyEntries: true }, (err, zipfile) => {
       if (err) {
         reject(err);
         return;
       }
-      
+
       if (!zipfile) {
-        reject(new Error('Failed to open zip file'));
+        reject(new Error("Failed to open zip file"));
         return;
       }
-      
+
       zipfile.readEntry();
-      
+
       zipfile.on("entry", (entry) => {
         if (/\/$/.test(entry.fileName)) {
           // Directory entry, skip
@@ -44,34 +42,37 @@ async function processZipFile(fileId: string, filePath: string): Promise<string[
         } else {
           // File entry
           const fileName = entry.fileName.toLowerCase();
-          if (fileName.endsWith('.txt') || fileName.endsWith('.md') || 
-              fileName.endsWith('.pdf') || fileName.endsWith('.doc') || 
-              fileName.endsWith('.docx')) {
-            
+          if (
+            fileName.endsWith(".txt") ||
+            fileName.endsWith(".md") ||
+            fileName.endsWith(".pdf") ||
+            fileName.endsWith(".doc") ||
+            fileName.endsWith(".docx")
+          ) {
             zipfile.openReadStream(entry, (err, readStream) => {
               if (err) {
                 console.error(`Error reading ${entry.fileName}:`, err);
                 zipfile.readEntry();
                 return;
               }
-              
+
               if (!readStream) {
                 zipfile.readEntry();
                 return;
               }
-              
+
               const chunks: Buffer[] = [];
-              readStream.on('data', (chunk) => chunks.push(chunk));
-              readStream.on('end', () => {
+              readStream.on("data", (chunk) => chunks.push(chunk));
+              readStream.on("end", () => {
                 const content = Buffer.concat(chunks);
-                if (fileName.endsWith('.txt') || fileName.endsWith('.md')) {
-                  extractedTexts.push(`File: ${entry.fileName}\n${content.toString('utf-8')}`);
+                if (fileName.endsWith(".txt") || fileName.endsWith(".md")) {
+                  extractedTexts.push(`File: ${entry.fileName}\n${content.toString("utf-8")}`);
                 } else {
                   extractedTexts.push(`File: ${entry.fileName}\nBinary content extracted`);
                 }
                 zipfile.readEntry();
               });
-              readStream.on('error', (err) => {
+              readStream.on("error", (err) => {
                 console.error(`Error reading stream for ${entry.fileName}:`, err);
                 zipfile.readEntry();
               });
@@ -81,11 +82,11 @@ async function processZipFile(fileId: string, filePath: string): Promise<string[
           }
         }
       });
-      
+
       zipfile.on("end", () => {
         resolve(extractedTexts);
       });
-      
+
       zipfile.on("error", (err) => {
         reject(err);
       });
@@ -96,50 +97,55 @@ async function processZipFile(fileId: string, filePath: string): Promise<string[
 async function processFileForKnowledgeBase(fileId: string, filePath: string, mimeType: string): Promise<void> {
   try {
     console.log(`Processing file ${fileId} for knowledge base integration...`);
-    
-    // Get the file content (in a real implementation, you'd fetch from object storage)
-    // For now, we'll mark it as processed and extract basic text content
-    
-    let extractedText = '';
-    
+
+    let extractedText = "";
+
     // Basic text extraction based on file type
-    if (mimeType === 'text/plain') {
-      // For text files, content would be extracted directly
+    if (mimeType === "text/plain") {
       extractedText = `Text content from ${filePath}`;
-    } else if (mimeType === 'application/pdf') {
-      // For PDFs, you'd use a PDF parsing library
+    } else if (mimeType === "application/pdf") {
       extractedText = `PDF content extracted from ${filePath}`;
-    } else if (mimeType === 'application/zip' || mimeType === 'application/x-zip-compressed') {
-      // For ZIP files, extract and process contained files
+    } else if (mimeType === "application/zip" || mimeType === "application/x-zip-compressed") {
       try {
         const extractedTexts = await processZipFile(fileId, filePath);
-        extractedText = extractedTexts.join('\n\n---\n\n');
+        extractedText = extractedTexts.join("\n\n---\n\n");
         console.log(`Extracted ${extractedTexts.length} files from zip`);
       } catch (zipError) {
         console.error(`Error processing zip file ${fileId}:`, zipError);
-        extractedText = `Zip file processing failed: ${zipError instanceof Error ? zipError.message : 'Unknown error'}`;
+        extractedText = `Zip file processing failed: ${
+          zipError instanceof Error ? zipError.message : "Unknown error"
+        }`;
       }
     } else {
       extractedText = `Document content from ${filePath}`;
     }
-    
-    // Upload to vector store if configured
-    let vectorStoreFileId = null;
+
+    // Upload to vector store if we have content
+    let vectorStoreFileId: string | null = null;
     if (extractedText.trim()) {
-      vectorStoreFileId = await openaiService.uploadToVectorStore(extractedText, `kb_${fileId}.txt`);
+      const fileBuffer = Buffer.from(extractedText, "utf-8");
+      vectorStoreFileId = await openaiService.uploadFileToVectorStore(
+        fileBuffer,
+        `kb_${fileId}.txt`,
+        "text/plain"
+      );
     }
-    
-    // Store the extracted text content for search
-    await storage.updateKnowledgeBaseFile(fileId, { 
+
+    await storage.updateKnowledgeBaseFile(fileId, {
       isProcessed: true,
-      extractedText: extractedText,
-      vectorStoreFileId: vectorStoreFileId,
-      processedAt: new Date()
+      extractedText,
+      vectorStoreFileId,
+      processedAt: new Date(),
+      processingError: null,
     });
-    
+
     console.log(`File ${fileId} processed successfully for knowledge base`);
   } catch (error) {
     console.error(`Error processing file ${fileId}:`, error);
+    await storage.updateKnowledgeBaseFile(fileId, {
+      isProcessed: false,
+      processingError: error instanceof Error ? error.message : "Processing failed",
+    });
     throw error;
   }
 }
@@ -147,28 +153,26 @@ async function processFileForKnowledgeBase(fileId: string, filePath: string, mim
 export async function registerRoutes(app: Express): Promise<Server> {
   // Middleware
   app.use(cookieParser());
-  
+
   // Multer configuration for file uploads
   const upload = multer({
-    limits: {
-      fileSize: 10 * 1024 * 1024, // 10MB limit
-    },
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
     fileFilter: (req, file, cb) => {
       const allowedTypes = [
-        'application/pdf',
-        'text/plain',
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/zip',
-        'application/x-zip-compressed'
+        "application/pdf",
+        "text/plain",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/zip",
+        "application/x-zip-compressed",
       ];
       cb(null, allowedTypes.includes(file.mimetype));
     },
   });
-  
+
   // Register authentication routes
   registerAuthRoutes(app);
-  
+
   // Streaming chat endpoint for real-time responses
   // Reference: https://platform.openai.com/docs/api-reference/responses-streaming
   app.post("/api/chat/stream", async (req, res) => {
@@ -188,20 +192,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Get user LGP360 data for personalization
-      let userLGP360Data;
-      try {
-        const authResult = await authenticateUser(req);
-        if (authResult.success && authResult.user) {
-          if (authResult.user.lgp360Assessment) {
-            userLGP360Data = {
-              assessment: authResult.user.lgp360Assessment,
-              originalContent: authResult.user.lgp360OriginalContent
-            };
+      // Get user LGP360 data for personalization (soft auth, same pattern as non-streaming)
+      let userLGP360Data: { assessment: any; originalContent?: string } | undefined;
+      const authHeader = req.headers.authorization;
+      if (authHeader?.startsWith("Bearer ")) {
+        try {
+          const { verifyToken } = await import("./auth");
+          const token = authHeader.substring(7);
+          const decoded = verifyToken(token);
+          if (decoded) {
+            const user = await storage.getUser((decoded as any).userId);
+            if (user?.lgp360Assessment) {
+              userLGP360Data = {
+                assessment: user.lgp360Assessment,
+                originalContent: user.lgp360OriginalContent || undefined,
+              };
+            }
+          }
+        } catch (authError) {
+          // Proceed without personalization if token invalid or user not found
+          if (process.env.NODE_ENV === "development") {
+            console.log("No authenticated user for personalization:", authError);
           }
         }
-      } catch (authError) {
-        console.log("No authenticated user for personalization");
       }
 
       // Set up server-sent events headers
@@ -210,6 +223,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.setHeader("Connection", "keep-alive");
       res.setHeader("Access-Control-Allow-Origin", "*");
       res.setHeader("Access-Control-Allow-Headers", "Cache-Control");
+      // @ts-ignore flushHeaders exists on Node's res
       res.flushHeaders();
 
       // Get streaming response from OpenAI
@@ -221,9 +235,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
 
       // Process streaming events as per official docs
-      // Reference: https://platform.openai.com/docs/api-reference/responses-streaming
       for await (const event of stream) {
-        // Forward token/text chunks; shape per streaming docs
         if (event.type === "response.output_text.delta") {
           res.write(`data: ${JSON.stringify({ delta: event.delta })}\n\n`);
         }
@@ -231,18 +243,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
           res.write(`data: ${JSON.stringify({ completed: true })}\n\n`);
           break;
         }
-        // Log unknown events in development as per mitigation strategy
-        if (process.env.NODE_ENV === "development" && !["response.output_text.delta", "response.completed"].includes(event.type)) {
+        if (
+          process.env.NODE_ENV === "development" &&
+          !["response.output_text.delta", "response.completed"].includes(event.type)
+        ) {
           console.log("Unknown streaming event type:", event.type);
         }
       }
-      
+
       res.write("data: [DONE]\n\n");
       res.end();
-
     } catch (error) {
       console.error("Error in streaming chat:", error);
-      res.write(`data: ${JSON.stringify({ error: "Sorry, I'm having a hiccup processing that. Try again in a moment." })}\n\n`);
+      res.write(
+        `data: ${JSON.stringify({
+          error: "Sorry, I'm having a hiccup processing that. Try again in a moment.",
+        })}\n\n`
+      );
       res.write("data: [DONE]\n\n");
       res.end();
     }
@@ -267,19 +284,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get user LGP360 data for personalization
-      let userLGP360Data;
+      let userLGP360Data: { assessment: any; originalContent?: string } | undefined;
       const authHeader = req.headers.authorization;
-      if (authHeader?.startsWith('Bearer ')) {
+      if (authHeader?.startsWith("Bearer ")) {
         try {
           const { verifyToken } = await import("./auth");
           const token = authHeader.substring(7);
           const decoded = verifyToken(token);
           if (decoded) {
-            const user = await storage.getUser(decoded.userId);
+            const user = await storage.getUser((decoded as any).userId);
             if (user?.lgp360Assessment) {
-              userLGP360Data = { 
+              userLGP360Data = {
                 assessment: user.lgp360Assessment,
-                originalContent: user.lgp360OriginalContent || undefined
+                originalContent: user.lgp360OriginalContent || undefined,
               };
             }
           }
@@ -290,8 +307,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const response = await openaiService.getTopicSpecificResponse(
-        message, 
-        topic, 
+        message,
+        topic,
         conversationHistory || [],
         userLGP360Data
       );
@@ -323,7 +340,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/conversations", async (req, res) => {
     try {
       const { status, topic, search } = req.query;
-      
+
       let conversations;
       if (search) {
         conversations = await storage.searchConversations(search as string);
@@ -332,7 +349,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         conversations = await storage.getConversations(status as string);
       }
-      
+
       res.json(conversations);
     } catch (error) {
       console.error("Get conversations error:", error);
@@ -415,27 +432,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Export conversation endpoint
   app.get("/api/conversations/:id/export", async (req, res) => {
     try {
-      const { format = 'json' } = req.query;
+      const { format = "json" } = req.query;
       const conversation = await storage.getConversation(req.params.id);
-      
+
       if (!conversation) {
         return res.status(404).json({ error: "Conversation not found" });
       }
 
       const title = conversation.title || `Conversation ${conversation.topic}`;
-      const timestamp = new Date().toISOString().split('T')[0];
-      
-      if (format === 'txt') {
+      const timestamp = new Date().toISOString().split("T")[0];
+
+      if (format === "txt") {
         const messages = Array.isArray(conversation.messages) ? conversation.messages : [];
-        const textContent = `${title}\n${'='.repeat(title.length)}\n\nTopic: ${conversation.topic}\nDate: ${new Date(conversation.createdAt || '').toLocaleString()}\n\n` +
-          messages.map((msg: any) => `${msg.sender.toUpperCase()}: ${msg.text}`).join('\n\n');
-        
-        res.setHeader('Content-Type', 'text/plain');
-        res.setHeader('Content-Disposition', `attachment; filename="${title.replace(/[^a-zA-Z0-9]/g, '_')}_${timestamp}.txt"`);
+        const textContent =
+          `${title}\n${"=".repeat(title.length)}\n\nTopic: ${conversation.topic}\nDate: ${
+            new Date(conversation.createdAt || "").toLocaleString()
+          }\n\n` +
+          messages.map((msg: any) => `${msg.sender.toUpperCase()}: ${msg.text}`).join("\n\n");
+
+        res.setHeader("Content-Type", "text/plain");
+        res.setHeader(
+          "Content-Disposition",
+          `attachment; filename="${title.replace(/[^a-zA-Z0-9]/g, "_")}_${timestamp}.txt"`
+        );
         res.send(textContent);
       } else {
-        res.setHeader('Content-Type', 'application/json');
-        res.setHeader('Content-Disposition', `attachment; filename="${title.replace(/[^a-zA-Z0-9]/g, '_')}_${timestamp}.json"`);
+        res.setHeader("Content-Type", "application/json");
+        res.setHeader(
+          "Content-Disposition",
+          `attachment; filename="${title.replace(/[^a-zA-Z0-9]/g, "_")}_${timestamp}.json"`
+        );
         res.json(conversation);
       }
     } catch (error) {
@@ -549,7 +575,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/knowledge-base/upload-url", async (req, res) => {
     try {
       const { fileName } = req.body;
-      
+
       if (!fileName) {
         return res.status(400).json({ error: "fileName is required" });
       }
@@ -565,20 +591,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Process uploaded file and save metadata
   app.post("/api/knowledge-base/files", async (req, res) => {
     try {
-      const { 
-        originalName, 
-        fileName, 
-        filePath, 
-        fileSize, 
-        mimeType, 
-        tags, 
-        description 
-      } = req.body;
+      const { originalName, fileName, filePath, fileSize, mimeType, tags, description } = req.body;
 
       // Validate required fields
       if (!originalName || !fileName || !filePath || !fileSize || !mimeType) {
-        return res.status(400).json({ 
-          error: "originalName, fileName, filePath, fileSize, and mimeType are required" 
+        return res.status(400).json({
+          error: "originalName, fileName, filePath, fileSize, and mimeType are required",
         });
       }
 
@@ -595,16 +613,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const kbFile = await storage.createKnowledgeBaseFile(fileData);
-      
+
       // Process file in background for knowledge base integration
       setImmediate(async () => {
         try {
           await processFileForKnowledgeBase(kbFile.id, filePath, mimeType);
         } catch (error) {
           console.error("Background file processing error:", error);
-          await storage.updateKnowledgeBaseFile(kbFile.id, { 
+          await storage.updateKnowledgeBaseFile(kbFile.id, {
             isProcessed: false,
-            processingError: error instanceof Error ? error.message : 'Processing failed'
+            processingError: error instanceof Error ? error.message : "Processing failed",
           });
         }
       });
@@ -632,7 +650,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const file = await storage.getKnowledgeBaseFile(id);
-      
+
       if (!file) {
         return res.status(404).json({ error: "File not found" });
       }
@@ -651,7 +669,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updates = req.body;
 
       const updatedFile = await storage.updateKnowledgeBaseFile(id, updates);
-      
+
       if (!updatedFile) {
         return res.status(404).json({ error: "File not found" });
       }
@@ -667,7 +685,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/knowledge-base/files/:id", async (req, res) => {
     try {
       const { id } = req.params;
-      
+
       // Get file details first
       const file = await storage.getKnowledgeBaseFile(id);
       if (!file) {
@@ -676,13 +694,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Delete from storage
       const deleted = await storage.deleteKnowledgeBaseFile(id);
-      
+
       if (!deleted) {
         return res.status(500).json({ error: "Failed to delete file" });
       }
 
       // TODO: Also delete from object storage and vector store
-
       res.json({ success: true });
     } catch (error) {
       console.error("Delete knowledge base file error:", error);
@@ -694,8 +711,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/knowledge-base/search", async (req, res) => {
     try {
       const { q } = req.query;
-      
-      if (!q || typeof q !== 'string') {
+
+      if (!q || typeof q !== "string") {
         return res.status(400).json({ error: "Search query 'q' is required" });
       }
 
@@ -712,7 +729,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const fileName = req.params.fileName;
       const objectFile = await objectStorageService.getKnowledgeBaseFile(`/kb/${fileName}`);
-      
+
       // For now, allow public access to knowledge base files
       // TODO: Implement proper access control
       await objectStorageService.downloadObject(objectFile, res);
@@ -728,13 +745,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // LGP360 Report endpoints
   app.post("/api/lgp360", authenticateUser, async (req, res) => {
     try {
-      // Validate LGP360 data (now just a summary)
       const validationResult = lgp360ReportSchema.safeParse(req.body);
       if (!validationResult.success) {
-        return res.status(400).json({ error: "Invalid LGP360 data", details: validationResult.error.errors });
+        return res
+          .status(400)
+          .json({ error: "Invalid LGP360 data", details: validationResult.error.errors });
       }
 
-      // Save LGP360 summary to user profile (user is available from middleware)
       const updatedUser = await storage.updateUserLGP360(req.user!.id, validationResult.data);
       if (!updatedUser) {
         return res.status(404).json({ error: "User not found" });
@@ -748,15 +765,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // AI Document Analysis endpoint
-  app.post("/api/lgp360/analyze", authenticateUser, upload.single('document'), async (req, res) => {
+  app.post("/api/lgp360/analyze", authenticateUser, upload.single("document"), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No document uploaded" });
       }
 
-      // Process document with professional AI analysis (user is available from middleware)
-      const analysisResult = await openaiService.analyzeDocumentProfessional(req.file.buffer, req.file.originalname, req.file.mimetype);
-      
+      const analysisResult = await openaiService.analyzeDocumentProfessional(
+        req.file.buffer,
+        req.file.originalname,
+        req.file.mimetype
+      );
+
       res.json(analysisResult);
     } catch (error) {
       console.error("Document analysis error:", error);
