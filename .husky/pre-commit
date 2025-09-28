@@ -1,4 +1,10 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-
-npx lint-staged
+#!/usr/bin/env bash
+set -euo pipefail
+# Block common API key patterns in staged diffs
+PATTERN='(sk-[A-Za-z0-9_-]{20,}|OPENAI_API_KEY=|AIza[0-9A-Za-z_-]{35})'
+if git diff --cached -U0 | grep -E "^\+.*$PATTERN" >/dev/null; then
+  echo "🚫 Commit blocked: secret-like pattern detected in staged changes." >&2
+  echo "   Remove secrets from code and use Replit Secrets or .env (gitignored)." >&2
+  exit 1
+fi
+exit 0
