@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+remote="${1:-origin}"
+branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo HEAD)"
+if [ "$remote" = "origin" ] && [ "$branch" = "main" ]; then
+  echo "🚫 Push to main is blocked locally. Create a PR instead." >&2
+  exit 1
+fi
+exit 0
