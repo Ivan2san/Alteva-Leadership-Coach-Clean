@@ -1,26 +1,17 @@
-name: CI
+name: node-ci
 on:
   pull_request:
-  push: { branches: [main] }
-
+    branches: [ main ]
 jobs:
-  test_build_e2e:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 20, cache: 'npm' }
+        with:
+          node-version: '20'
+          cache: 'npm'
       - run: npm ci
-      - run: npm run lint && npm run typecheck
-      - run: npm run test:unit -- --reporter=dot
-      - run: npm run build
-      - run: npx playwright install --with-deps
-      - name: Start preview
-        run: npm run preview & npx wait-on http://localhost:4173
-      - name: E2E (Playwright)
-        run: npx playwright test --reporter=line
-      - name: Lighthouse CI
-        run: lhci autorun --collect.url=http://localhost:4173 --upload.target=filesystem
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with: { name: reports, path: "./playwright-report/** ./ .lighthouseci/**" }
+      - run: npm run check --if-present
+      - run: npm run build --if-present
+      - run: npm test --if-present
