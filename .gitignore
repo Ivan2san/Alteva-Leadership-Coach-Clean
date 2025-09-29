@@ -61,3 +61,6 @@ pgdata/
 # Local scratch files
 attached_assets/
 snap-*.zip
+
+# Local editor assets (Replit)
+attached_assets/
