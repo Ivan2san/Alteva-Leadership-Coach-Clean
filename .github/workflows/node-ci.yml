@@ -1,6 +1,9 @@
 name: node-ci
+
 on:
   pull_request:
+    branches: [ main ]
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -11,5 +14,12 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - name: TypeScript check
+        run: |
+          if npm run | grep -qE 'typecheck(:.*)?'; then
+            npm run typecheck || npm run typecheck:ci
+          else
+            npx tsc --noEmit
+          fi
       - run: npm run build --if-present
       - run: npm test --if-present
