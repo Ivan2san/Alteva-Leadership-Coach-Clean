@@ -1,0 +1,66 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Choose npm lockfile to keep; ignore others (we keep package-lock.json)
+yarn.lock
+pnpm-lock.yaml
+
+# Build outputs
+dist/
+build/
+.vite/
+.cache/
+coverage/
+
+# Test artifacts
+playwright-report/
+test-results/
+
+# Logs / PIDs / temp
+logs/
+*.log
+*.log.*
+*.pid
+server.pid
+tmp/
+.temp/
+*.swp
+*.swo
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+
+# Editors / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Replit
+.repl_history
+# Keep .replit tracked if you need reproducible run config
+
+# App-specific runtime
+uploads/
+storage/
+vector_index/
+knowledge_store/
+tmp/
+.temp/
+drizzle/*-journal
+pgdata/
+
+# Local scratch files
+attached_assets/
+snap-*.zip
+
+# Local editor assets (Replit)
+attached_assets/
