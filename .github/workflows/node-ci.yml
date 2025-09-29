@@ -12,5 +12,5 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - run: npm run check --if-present
+      - run: npx tsc -p tsconfig.ci.json
       - run: npm run build
