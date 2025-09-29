@@ -113,17 +113,17 @@ export const insertPromptTemplateSchema = createInsertSchema(promptTemplates).om
   usageCount: true,
 });
 
-export type InsertUser = z.infer<typeof insertUserSchema>;
+export type InsertUser = ReturnType<typeof insertUserSchema['parse']>;
 export type User = typeof users.$inferSelect;
-export type SignupData = z.infer<typeof signupSchema>;
+export type SignupData = ReturnType<typeof signupSchema['parse']>;
 export type LoginData = z.infer<typeof loginSchema>;
 export type LGP360ReportData = z.infer<typeof lgp360ReportSchema>;
 export type Conversation = typeof conversations.$inferSelect;
-export type InsertConversation = z.infer<typeof insertConversationSchema>;
+export type InsertConversation = ReturnType<typeof insertConversationSchema['parse']>;
 export type KnowledgeBaseFile = typeof knowledgeBaseFiles.$inferSelect;
-export type InsertKnowledgeBaseFile = z.infer<typeof insertKnowledgeBaseFileSchema>;
+export type InsertKnowledgeBaseFile = ReturnType<typeof insertKnowledgeBaseFileSchema['parse']>;
 export type PromptTemplate = typeof promptTemplates.$inferSelect;
-export type InsertPromptTemplate = z.infer<typeof insertPromptTemplateSchema>;
+export type InsertPromptTemplate = ReturnType<typeof insertPromptTemplateSchema['parse']>;
 
 export const messageSchema = z.object({
   id: z.string(),

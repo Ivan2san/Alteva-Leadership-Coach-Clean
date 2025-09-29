@@ -12,7 +12,7 @@ export function registerAuthRoutes(app: Express) {
       if (!validationResult.success) {
         return res.status(400).json({ 
           error: "Invalid signup data", 
-          details: validationResult.error.errors 
+          details: validationResult.error.issues 
         });
       }
 
@@ -57,7 +57,7 @@ export function registerAuthRoutes(app: Express) {
       if (!validationResult.success) {
         return res.status(400).json({ 
           error: "Invalid login data", 
-          details: validationResult.error.errors 
+          details: validationResult.error.issues 
         });
       }
 
