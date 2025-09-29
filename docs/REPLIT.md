@@ -1,32 +1,36 @@
-# Replit workflow hygiene
+# Replit Workflow Hygiene
 
-## Run + Dev
-- Use the big **Run** button. It runs `npm run dev` as configured in `.replit`.
-- Node 20 only. Repo enforces `"engines": { "node": ">=20 <21" }` and `.nvmrc` is `20`.
+## Source of truth
+- GitHub (`main`) is the source of truth. Replit is a working copy.
 
-## Env & secrets
-- Never commit secrets. Keep them in **Replit → Secrets**.
-- `.env` and `.env.*` are gitignored. `.env.example` uses placeholders only.
+## Node & scripts
+- Node 20.
+- Install: `npm ci`
+- Dev: `npm run dev` (binds to port **5000**)
+- Typecheck: `npm run typecheck:ci || npx tsc --noEmit`
+- Build: `npm run build --if-present`
+- Test: `npm test --if-present`
 
-## Git rules (Replit)
-- Always `git pull --ff-only` before changes.
-- Branch off `main`. No direct pushes to `main` (blocked by hooks + rules).
-- Open a PR; CI must be green; 1 approval required; linear history enforced.
+## Ports
+- Replit exposes port 5000 by default. Keep `PORT=5000` for dev.
+- For ad-hoc smoke tests of the built server: `NODE_ENV=production PORT=5050 node dist/index.js`.
 
-## Files to avoid committing
-- `attached_assets/` (screenshots/dumps from the editor) are ignored by `.gitignore`.
-- Build outputs (`dist/`, `.vite/`, etc.) and logs are ignored.
+## MSW (Mock Service Worker)
+- Disabled by default.
+- Enable in dev by setting secret: `VITE_ENABLE_MSW=true`.
+- The app only starts MSW in dev when that secret is set.
 
-## Useful commands
-- Install deps: `npm ci`
-- Build prod: `npm run build`
-- Type check: `npm run check` (tsc)
-- Smoke status (GitHub): manual workflow **Prod Smoke Status**
+## Secrets & env
+- Never commit secrets. Use **Replit Secrets** or a local `.env` ignored by Git.
+- Keep `.env.example` up to date with non-secret keys.
 
-## Snapshots (if needed)
-- If you must capture a workspace snapshot, zip your tree locally and keep zips out of git.
-- Use branches like `snapshot/*` only for deliberate comparisons, then delete.
+## Git hygiene
+- Always pull fast-forward: `git pull --ff-only`.
+- Create branches off `main`, open PRs to `main`, require green CI (**node-ci**) and at least one approval.
+- Do not push to `main`. If you must rewrite branch history: `--force-with-lease` (never to `main`).
 
-## Common fixes
-- Port in use: `kill -9 $(lsof -ti :5000,:5173) 2>/dev/null || true` then Run.
-- Stale deps: `npm ci` then `npm run build`.
+## Files to ignore
+- `.gitignore` excludes `node_modules`, build outputs (`dist`, `.vite`), logs, and `.env`.
+
+## Replit workflows
+- `.replit` may auto-start `npm run dev` on port 5000. If you need to run the built server concurrently, use a different port (e.g. 5050) or temporarily stop the dev task.
