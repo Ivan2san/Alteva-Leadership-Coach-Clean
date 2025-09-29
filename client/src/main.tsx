@@ -10,7 +10,7 @@ if (import.meta.env.DEV && import.meta.env.VITE_DISABLE_MSW !== "true") {
   import("./mocks/browser")
     .then(({ worker }) => {
       const swUrl = `${import.meta.env.BASE_URL || "/"}mockServiceWorker.js`;
-      return worker.start({
+      if (import.meta.env.DEV && import.meta.env.VITE_ENABLE_MSW === "true") worker.start({
         onUnhandledRequest: "bypass",
         serviceWorker: { url: swUrl }
       });
