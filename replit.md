@@ -1,8 +1,8 @@
 # Overview
 
-This is a mobile-first Progressive Web App (PWA) designed for AI-powered leadership development coaching. The application provides a structured interface for users to engage with leadership growth topics through predefined prompts and custom conversations. The app is built as a React-based frontend with an Express.js backend that integrates with OpenAI's API to deliver personalized coaching experiences.
+This is a comprehensive AI-powered leadership development platform built as a mobile-first Progressive Web App (PWA). The application delivers personalized coaching experiences through the Alteva Growth methodology, combining structured leadership assessments, knowledge base integration, and AI-powered conversations to support professional growth and development.
 
-The application follows a clear user journey: users select from 8 leadership topics on the main screen, choose from curated prompts or write their own, and then engage in AI-powered conversations tailored to their specific leadership development needs.
+The platform provides a complete leadership development ecosystem: users authenticate and access their personalized dashboard, complete LGP360 professional assessments for AI personalization, upload knowledge base resources, engage with 8 core leadership topics through curated prompts, participate in real-time streaming AI conversations, and track their progress through comprehensive analytics and conversation history management.
 
 # User Preferences
 
