@@ -10,9 +10,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthWrapper } from "@/components/AuthWrapper";
 
 import { flags } from "@/lib/flags";
-import JourneyV2Router from "@/journey2/Router";
 
-// v1 pages you already have
+// v1 pages
 import Home from "@/pages/home";
 import Login from "@/pages/login";
 import Signup from "@/pages/signup";
@@ -26,6 +25,10 @@ import Settings from "@/pages/settings";
 import WelcomeGuide from "@/pages/welcome-guide";
 import LGP360Report from "@/pages/lgp360-report";
 import NotFound from "@/pages/not-found";
+import Dashboard from "@/pages/dashboard";
+
+// v2
+import JourneyV2Router from "@/journey2/Router";
 
 // When journeyV2 is ON, push "/" -> "/journey"
 function JumpToJourney() {
@@ -61,6 +64,7 @@ function AppRouter() {
       {/* v1-only routes */}
       {!flags.journeyV2 && (
         <>
+          <Route path="/dashboard" component={Dashboard} />
           <Route path="/prompts/:topic" component={PromptSelection} />
           <Route path="/chat/:topic" component={Chat} />
         </>
