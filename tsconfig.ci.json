@@ -1,8 +1,6 @@
 {
   "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "noEmit": true,
-    "skipLibCheck": true
-  },
-  "exclude": ["client/src/**", "tests/**", "**/*.test.ts", "**/*.test.tsx"]
+  "compilerOptions": { "noEmit": true },
+  "include": ["server/**/*", "shared/**/*", "scripts/**/*", "vite.config.ts", "drizzle.config.ts"],
+  "exclude": ["client/**/*", "tests/**/*"]
 }
