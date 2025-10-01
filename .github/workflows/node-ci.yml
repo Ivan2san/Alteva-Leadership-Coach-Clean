@@ -1,16 +1,45 @@
 name: node-ci
+
 on:
   pull_request:
-    branches: [ main ]
+    branches: [main]
+  workflow_dispatch:
+
+# Cancel older runs on the same branch/PR
+concurrency:
+  group: node-ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build:
+  ci:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        journey_v2: [0, 1]   # build both OFF and ON
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: npm
-      - run: npm ci
-      - run: npm run build --if-present
-      - run: npm test --if-present
+          cache: 'npm'
+
+      - name: Install deps (include dev)
+        run: npm ci
+        env:
+          NODE_ENV: development
+
+      - name: Typecheck (server/shared scope)
+        run: npm run typecheck:ci
+
+      - name: Build (VITE_JOURNEY_V2=${{ matrix.journey_v2 }})
+        run: npm run build --if-present
+        env:
+          VITE_JOURNEY_V2: ${{ matrix.journey_v2 }}
+
+      - name: Test (if defined)
+        run: npm test --if-present
