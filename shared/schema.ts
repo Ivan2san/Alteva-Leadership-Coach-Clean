@@ -133,3 +133,112 @@ export const messageSchema = z.object({
 });
 
 export type Message = z.infer<typeof messageSchema>;
+
+// Journey 2 Tables
+export const goals = pgTable("goals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  title: text("title").notNull(),
+  description: text("description"),
+  category: text("category"),
+  status: text("status").notNull().default('active'),
+  progress: integer("progress").default(0),
+  targetDate: timestamp("target_date"),
+  startedAt: timestamp("started_at").defaultNow(),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const checkIns = pgTable("check_ins", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  date: timestamp("date").notNull().defaultNow(),
+  mood: integer("mood").notNull(),
+  energy: integer("energy"),
+  focus: integer("focus"),
+  note: text("note"),
+  isWeekly: boolean("is_weekly").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const milestones = pgTable("milestones", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  planId: varchar("plan_id").references(() => plans.id),
+  goalId: varchar("goal_id").references(() => goals.id),
+  title: text("title").notNull(),
+  description: text("description"),
+  status: text("status").notNull().default('pending'),
+  dueDate: timestamp("due_date"),
+  completedAt: timestamp("completed_at"),
+  order: integer("order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const plans = pgTable("plans", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  title: text("title").notNull(),
+  description: text("description"),
+  status: text("status").notNull().default('draft'),
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const nextActions = pgTable("next_actions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  planId: varchar("plan_id").references(() => plans.id),
+  goalId: varchar("goal_id").references(() => goals.id),
+  text: text("text").notNull(),
+  priority: text("priority").default('medium'),
+  status: text("status").notNull().default('pending'),
+  dueDate: timestamp("due_date"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Journey 2 Insert Schemas
+export const insertGoalSchema = createInsertSchema(goals).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  startedAt: true,
+});
+
+export const insertCheckInSchema = createInsertSchema(checkIns).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertMilestoneSchema = createInsertSchema(milestones).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPlanSchema = createInsertSchema(plans).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertNextActionSchema = createInsertSchema(nextActions).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Journey 2 Types
+export type Goal = typeof goals.$inferSelect;
+export type InsertGoal = ReturnType<typeof insertGoalSchema['parse']>;
+export type CheckIn = typeof checkIns.$inferSelect;
+export type InsertCheckIn = ReturnType<typeof insertCheckInSchema['parse']>;
+export type Milestone = typeof milestones.$inferSelect;
+export type InsertMilestone = ReturnType<typeof insertMilestoneSchema['parse']>;
+export type Plan = typeof plans.$inferSelect;
+export type InsertPlan = ReturnType<typeof insertPlanSchema['parse']>;
+export type NextAction = typeof nextActions.$inferSelect;
+export type InsertNextAction = ReturnType<typeof insertNextActionSchema['parse']>;
