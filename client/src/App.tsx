@@ -68,7 +68,12 @@ function AppRouter() {
       )}
 
       {/* v2 (captures /journey/**) */}
-      {flags.journeyV2 && <Route path="/journey/:rest*" component={JourneyV2Router} />}
+      {flags.journeyV2 && (
+        <>
+          <Route path="/journey" component={JourneyV2Router} />
+          <Route path="/journey/:rest*" component={JourneyV2Router} />
+        </>
+      )}
 
       {/* 404 */}
       <Route component={NotFound} />

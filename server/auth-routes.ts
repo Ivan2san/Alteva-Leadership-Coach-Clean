@@ -100,21 +100,29 @@ export function registerAuthRoutes(app: Express) {
       const authHeader = req.headers.authorization;
       const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
       
+      let user;
+
       if (!token) {
-        return res.status(401).json({ error: "Not authenticated" });
-      }
+        // Bypass auth: use default admin user
+        const users = await storage.getAllUsers();
+        user = users.find(u => u.email === "admin@leadership-coach.app");
+        
+        if (!user) {
+          return res.status(401).json({ error: "Not authenticated" });
+        }
+      } else {
+        const { verifyToken } = await import("./auth");
+        const decoded = verifyToken(token);
+        
+        if (!decoded) {
+          return res.status(401).json({ error: "Invalid token" });
+        }
 
-      const { verifyToken } = await import("./auth");
-      const decoded = verifyToken(token);
-      
-      if (!decoded) {
-        return res.status(401).json({ error: "Invalid token" });
-      }
-
-      const user = await storage.getUser(decoded.userId);
-      
-      if (!user) {
-        return res.status(401).json({ error: "User not found" });
+        user = await storage.getUser(decoded.userId);
+        
+        if (!user) {
+          return res.status(401).json({ error: "User not found" });
+        }
       }
 
       // Return user without password

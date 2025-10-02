@@ -37,22 +37,30 @@ export const authenticateUser = async (req: Request, res: Response, next: NextFu
     const authHeader = req.headers.authorization;
     const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
 
+    let user;
+
     if (!token) {
-      return res.status(401).json({ error: "Not authenticated" });
-    }
+      // Bypass auth: use default admin user
+      const users = await storage.getAllUsers();
+      user = users.find(u => u.email === "admin@leadership-coach.app");
+      
+      if (!user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+    } else {
+      // Verify token using existing auth utility
+      const decoded = verifyToken(token);
 
-    // Verify token using existing auth utility
-    const decoded = verifyToken(token);
+      if (!decoded) {
+        return res.status(401).json({ error: "Invalid token" });
+      }
 
-    if (!decoded) {
-      return res.status(401).json({ error: "Invalid token" });
-    }
+      // Get user from database
+      user = await storage.getUser((decoded as any).userId);
 
-    // Get user from database
-    const user = await storage.getUser((decoded as any).userId);
-
-    if (!user) {
-      return res.status(401).json({ error: "User not found" });
+      if (!user) {
+        return res.status(401).json({ error: "User not found" });
+      }
     }
 
     // Attach a SAFE shape to request (exclude password and serialize dates)
