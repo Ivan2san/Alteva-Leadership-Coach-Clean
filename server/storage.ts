@@ -90,6 +90,20 @@ export interface IStorage {
   deleteCheckIn(id: string): Promise<boolean>;
   getCheckInStreak(userId: string): Promise<number>;
   getCheckInByDate(userId: string, date: Date): Promise<CheckIn | undefined>;
+
+  // Analytics operations (Journey 2)
+  getGoalStats(userId: string): Promise<{
+    total: number;
+    completed: number;
+    active: number;
+    avgProgress: number;
+  }>;
+  getCheckInTrends(userId: string, days?: number): Promise<{
+    date: string;
+    mood: number;
+    energy: number;
+    focus: number;
+  }[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -528,6 +542,68 @@ export class DatabaseStorage implements IStorage {
       .limit(1);
     
     return checkIn;
+  }
+
+  // Analytics operations (Journey 2)
+  async getGoalStats(userId: string): Promise<{
+    total: number;
+    completed: number;
+    active: number;
+    avgProgress: number;
+  }> {
+    const allGoals = await db
+      .select()
+      .from(goals)
+      .where(eq(goals.userId, userId));
+
+    const total = allGoals.length;
+    const completed = allGoals.filter(g => g.status === 'completed').length;
+    const active = allGoals.filter(g => g.status !== 'completed' && g.status !== 'abandoned').length;
+    
+    const totalProgress = allGoals.reduce((sum, g) => sum + (g.progress || 0), 0);
+    const avgProgress = total > 0 ? Math.round(totalProgress / total) : 0;
+
+    return {
+      total,
+      completed,
+      active,
+      avgProgress
+    };
+  }
+
+  async getCheckInTrends(userId: string, days: number = 30): Promise<{
+    date: string;
+    mood: number;
+    energy: number;
+    focus: number;
+  }[]> {
+    const daysAgo = new Date();
+    daysAgo.setDate(daysAgo.getDate() - days);
+    daysAgo.setHours(0, 0, 0, 0);
+
+    const result = await db
+      .select({
+        date: sql<string>`DATE(${checkIns.date})`,
+        mood: sql<number>`ROUND(AVG(${checkIns.mood})::numeric, 1)`,
+        energy: sql<number>`ROUND(AVG(${checkIns.energy})::numeric, 1)`,
+        focus: sql<number>`ROUND(AVG(${checkIns.focus})::numeric, 1)`
+      })
+      .from(checkIns)
+      .where(
+        and(
+          eq(checkIns.userId, userId),
+          sql`${checkIns.date} >= ${daysAgo}`
+        )
+      )
+      .groupBy(sql`DATE(${checkIns.date})`)
+      .orderBy(sql`DATE(${checkIns.date})`);
+
+    return result.map(row => ({
+      date: row.date,
+      mood: Number(row.mood) || 0,
+      energy: Number(row.energy) || 0,
+      focus: Number(row.focus) || 0
+    }));
   }
 }
 

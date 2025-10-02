@@ -1026,6 +1026,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Journey 2 - Insights/Analytics API
+  app.get("/api/journey/insights/goals", authenticateUser, async (req, res) => {
+    try {
+      const stats = await storage.getGoalStats(req.user!.id);
+      res.json(stats);
+    } catch (error) {
+      console.error("Get goal stats error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/journey/insights/check-ins/trends", authenticateUser, async (req, res) => {
+    try {
+      const { days } = req.query;
+      const trends = await storage.getCheckInTrends(
+        req.user!.id,
+        days ? parseInt(days as string) : 30
+      );
+      res.json(trends);
+    } catch (error) {
+      console.error("Get check-in trends error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
