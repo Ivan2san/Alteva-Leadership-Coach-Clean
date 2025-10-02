@@ -1,8 +1,10 @@
 import express, { type Request, Response, NextFunction } from "express";
 import cookieParser from "cookie-parser";
+import { createServer } from "node:http";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { seedAdminUser, migrateExistingData } from "./seed-admin";
+import { createServer } from "node:http";
 
 const app = express();
 
@@ -20,14 +22,18 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-// Compact API logging
+<<<<<<< HEAD
+// Compact API logging (TS-safe override)
+=======
+// Compact API logging (TS-safe override of res.json)
+>>>>>>> a5f48d0 (feat(journey): add v2 router gate + dashboard stub; fix single listen; add free-ports script)
 app.use((req, res, next) => {
   const start = Date.now();
   let captured: unknown;
   const origJson = res.json.bind(res);
   (res as any).json = (body: unknown) => {
     captured = body;
-    return origJson(body);
+    return origJson(body as any);
   };
   res.on("finish", () => {
     if (req.path.startsWith("/api")) {
@@ -48,24 +54,27 @@ app.get("/", (req, res, next) => {
   next();
 });
 
-// Process diagnostics
-process.on("uncaughtException", (err) => {
-  console.error("Uncaught Exception:", err);
-  process.exit(1);
-});
-process.on("unhandledRejection", (reason, p) => {
-  console.error("Unhandled Rejection at:", p, "reason:", reason);
-  process.exit(1);
-});
-
 console.log("Starting server initialization...");
 
 async function startServer() {
   try {
-    // Register routes; get a real http.Server back
-    const server = await registerRoutes(app);
+<<<<<<< HEAD
+    // Register routes; prefer an http.Server if provided
+    let server = (await registerRoutes(app)) as any;
+    if (!server || typeof server.listen !== "function") {
+      server = createServer(app);
+    }
 
-    // Error handler
+    // Error middleware
+=======
+    // Register routes; some setups may return an http.Server (e.g., websockets)
+    let server: import("http").Server | undefined = (await registerRoutes(app)) as any;
+    if (!server || typeof (server as any).listen !== "function") {
+      server = createServer(app);
+    }
+
+    // Error handler (after routes)
+>>>>>>> a5f48d0 (feat(journey): add v2 router gate + dashboard stub; fix single listen; add free-ports script)
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
       const status = err.status || err.statusCode || 500;
       const message = err.message || "Internal Server Error";
@@ -75,47 +84,64 @@ async function startServer() {
 
     const isProduction = process.env.NODE_ENV === "production";
     if (!isProduction) {
-      await setupVite(app, server); // dev middleware
+      await setupVite(app, server);
     } else {
-      serveStatic(app); // serve built assets
+      serveStatic(app);
     }
 
-    const PORT = Number(process.env.PORT || 5000);
+    const port = Number(process.env.PORT ?? 5000);
+<<<<<<< HEAD
 
-    server.listen(PORT, "0.0.0.0", () => {
-      console.log(`✅ Server successfully started on port ${PORT}`);
-      log(`serving on port ${PORT}`);
+    server.listen(port, "0.0.0.0", () => {
+      console.log(`✅ Server successfully started on port ${port}`);
+      log(`serving on port ${port}`);
 
-      // Seed/migrate in background
+=======
+    const serverInstance = server.listen(port, "0.0.0.0", () => {
+      console.log(`✅ Server successfully started on port ${port}`);
+      log(`serving on port ${port}`);
+
+>>>>>>> a5f48d0 (feat(journey): add v2 router gate + dashboard stub; fix single listen; add free-ports script)
       if (process.env.NODE_ENV !== "test") {
         setImmediate(async () => {
           try {
             console.log("Starting background database initialization...");
-            const admin = await seedAdminUser();
-            if (admin) await migrateExistingData(admin.id);
+            const adminUser = await seedAdminUser();
+            if (adminUser) await migrateExistingData(adminUser.id);
             console.log("Background database initialization completed");
-          } catch (e) {
-            console.error("Background database initialization failed:", e);
+          } catch (error) {
+            console.error("Background database initialization failed:", error);
           }
         });
       }
     });
 
-    server.on("error", (err) => {
+<<<<<<< HEAD
+    server.on("error", (err: NodeJS.ErrnoException) => {
+=======
+    serverInstance.on("error", (err: NodeJS.ErrnoException) => {
+>>>>>>> a5f48d0 (feat(journey): add v2 router gate + dashboard stub; fix single listen; add free-ports script)
+      if (err.code === "EADDRINUSE") {
+        console.error(`Port ${port} in use. Try a different PORT (e.g. 5001).`);
+        process.exit(1);
+      }
       console.error("Server error:", err);
     });
 
-    process.once("SIGTERM", () => {
-      console.log("Received SIGTERM, shutting down gracefully");
-      server.close();
+<<<<<<< HEAD
+    server.on("listening", () => {
+      console.log("Server listening event fired");
     });
+=======
+>>>>>>> a5f48d0 (feat(journey): add v2 router gate + dashboard stub; fix single listen; add free-ports script)
   } catch (error) {
     console.error("Fatal server startup error:", error);
     process.exit(1);
   }
 }
 
-startServer().catch((err) => {
-  console.error("Unhandled server error:", err);
+startServer().catch((error) => {
+  console.error("Unhandled server error:", error);
   process.exit(1);
 });
+

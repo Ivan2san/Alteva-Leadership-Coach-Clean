@@ -1,26 +1,30 @@
 import React from "react";
-import { Route, Switch, Redirect } from "wouter";
-import Shell from "./components/Shell";
-import Overview from "./pages/Overview";
-import Onboarding from "./pages/Onboarding";
-import Goals from "./pages/Goals";
-import DailyCheckIn from "./pages/DailyCheckIn";
-import Insights from "./pages/Insights";
-import Library from "./pages/Library";
+import { Router as WouterRouter, Switch, Route, Redirect } from "wouter";
+
+import Overview from "@/journey2/pages/Overview";
+import Goals from "@/journey2/pages/Goals";
+import Plan from "@/journey2/pages/Plan";
+import CheckIns from "@/journey2/pages/CheckIns";
+import DailyCheckIn from "@/journey2/pages/DailyCheckIn";
+import Insights from "@/journey2/pages/Insights";
+import Library from "@/journey2/pages/Library";
+import Onboarding from "@/journey2/pages/Onboarding";
 
 export default function JourneyV2Router() {
   return (
-    <Shell>
+    <WouterRouter base="/journey">
       <Switch>
-        <Route path="/journey" component={() => <Redirect to="/journey/overview" />} />
-        <Route path="/journey/overview" component={Overview} />
-        <Route path="/journey/onboarding" component={Onboarding} />
-        <Route path="/journey/goals" component={Goals} />
-        <Route path="/journey/check-in" component={DailyCheckIn} />
-        <Route path="/journey/insights" component={Insights} />
-        <Route path="/journey/library" component={Library} />
-        <Route>Not found</Route>
+        <Route path="/" component={Overview} />
+        <Route path="/goals" component={Goals} />
+        <Route path="/plan" component={Plan} />
+        <Route path="/check-ins" component={CheckIns} />
+        <Route path="/daily" component={DailyCheckIn} />
+        <Route path="/insights" component={Insights} />
+        <Route path="/library" component={Library} />
+        <Route path="/onboarding" component={Onboarding} />
+        {/* fallback */}
+        <Route><Redirect to="/" /></Route>
       </Switch>
-    </Shell>
+    </WouterRouter>
   );
 }

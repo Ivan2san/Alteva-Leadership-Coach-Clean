@@ -1,12 +1,12 @@
 import React from "react";
 import Shell from "@/journey2/components/Shell";
 
-export default function Goals() {
+export default function CheckIns() {
   return (
     <Shell>
-      <h2 className="text-2xl font-semibold">Goals</h2>
+      <h2 className="text-2xl font-semibold">Check-ins</h2>
       <p className="mt-2 text-sm text-muted-foreground">
-        Add CRUD for goals, progress bars, and next actions.
+        Weekly reflections, metrics, and coach notes.
       </p>
     </Shell>
   );
