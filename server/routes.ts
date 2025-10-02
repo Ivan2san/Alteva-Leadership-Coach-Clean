@@ -9,6 +9,9 @@ import {
   messageSchema,
   insertGoalSchema,
   insertCheckInSchema,
+  insertPlanSchema,
+  insertMilestoneSchema,
+  insertNextActionSchema,
 } from "@shared/schema";
 import { ObjectStorageService } from "./objectStorage";
 import { registerAuthRoutes } from "./auth-routes";
@@ -1022,6 +1025,268 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true });
     } catch (error) {
       console.error("Delete check-in error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Journey 2 - Plans API
+  app.get("/api/journey/plans", authenticateUser, async (req, res) => {
+    try {
+      const plans = await storage.getPlans(req.user!.id);
+      res.json(plans);
+    } catch (error) {
+      console.error("Get plans error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/journey/plans", authenticateUser, async (req, res) => {
+    try {
+      const validatedData = insertPlanSchema.parse({
+        ...req.body,
+        userId: req.user!.id,
+      });
+
+      const plan = await storage.createPlan(validatedData);
+      res.status(201).json(plan);
+    } catch (error) {
+      console.error("Create plan error:", error);
+      res.status(400).json({ error: "Invalid plan data" });
+    }
+  });
+
+  app.get("/api/journey/plans/:id", authenticateUser, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const plan = await storage.getPlan(id);
+
+      if (!plan) {
+        return res.status(404).json({ error: "Plan not found" });
+      }
+
+      if (plan.userId !== req.user!.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      res.json(plan);
+    } catch (error) {
+      console.error("Get plan error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.patch("/api/journey/plans/:id", authenticateUser, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const plan = await storage.getPlan(id);
+
+      if (!plan) {
+        return res.status(404).json({ error: "Plan not found" });
+      }
+
+      if (plan.userId !== req.user!.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const updated = await storage.updatePlan(id, req.body);
+
+      if (!updated) {
+        return res.status(500).json({ error: "Failed to update plan" });
+      }
+
+      res.json(updated);
+    } catch (error) {
+      console.error("Update plan error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/journey/plans/:id", authenticateUser, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const plan = await storage.getPlan(id);
+
+      if (!plan) {
+        return res.status(404).json({ error: "Plan not found" });
+      }
+
+      if (plan.userId !== req.user!.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const deleted = await storage.deletePlan(id);
+
+      if (!deleted) {
+        return res.status(500).json({ error: "Failed to delete plan" });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete plan error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Journey 2 - Milestones API
+  app.get("/api/journey/plans/:planId/milestones", authenticateUser, async (req, res) => {
+    try {
+      const { planId } = req.params;
+      const plan = await storage.getPlan(planId);
+
+      if (!plan) {
+        return res.status(404).json({ error: "Plan not found" });
+      }
+
+      if (plan.userId !== req.user!.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const milestones = await storage.getMilestones(planId);
+      res.json(milestones);
+    } catch (error) {
+      console.error("Get milestones error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/journey/plans/:planId/milestones", authenticateUser, async (req, res) => {
+    try {
+      const { planId } = req.params;
+      const plan = await storage.getPlan(planId);
+
+      if (!plan) {
+        return res.status(404).json({ error: "Plan not found" });
+      }
+
+      if (plan.userId !== req.user!.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const validatedData = insertMilestoneSchema.parse({
+        ...req.body,
+        planId,
+      });
+
+      const milestone = await storage.createMilestone(validatedData);
+      res.status(201).json(milestone);
+    } catch (error) {
+      console.error("Create milestone error:", error);
+      res.status(400).json({ error: "Invalid milestone data" });
+    }
+  });
+
+  app.patch("/api/journey/milestones/:id", authenticateUser, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const milestone = await storage.updateMilestone(id, req.body);
+
+      if (!milestone) {
+        return res.status(404).json({ error: "Milestone not found" });
+      }
+
+      res.json(milestone);
+    } catch (error) {
+      console.error("Update milestone error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/journey/milestones/:id", authenticateUser, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const deleted = await storage.deleteMilestone(id);
+
+      if (!deleted) {
+        return res.status(404).json({ error: "Milestone not found" });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete milestone error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Journey 2 - Next Actions API
+  app.get("/api/journey/next-actions", authenticateUser, async (req, res) => {
+    try {
+      const { planId } = req.query;
+      const actions = await storage.getNextActions(
+        req.user!.id,
+        planId as string | undefined
+      );
+      res.json(actions);
+    } catch (error) {
+      console.error("Get next actions error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/journey/next-actions", authenticateUser, async (req, res) => {
+    try {
+      const validatedData = insertNextActionSchema.parse({
+        ...req.body,
+        userId: req.user!.id,
+      });
+
+      const action = await storage.createNextAction(validatedData);
+      res.status(201).json(action);
+    } catch (error) {
+      console.error("Create next action error:", error);
+      res.status(400).json({ error: "Invalid next action data" });
+    }
+  });
+
+  app.patch("/api/journey/next-actions/:id", authenticateUser, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const action = await storage.getNextActions(req.user!.id);
+      const existing = action.find(a => a.id === id);
+
+      if (!existing) {
+        return res.status(404).json({ error: "Next action not found" });
+      }
+
+      if (existing.userId !== req.user!.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const updated = await storage.updateNextAction(id, req.body);
+
+      if (!updated) {
+        return res.status(500).json({ error: "Failed to update next action" });
+      }
+
+      res.json(updated);
+    } catch (error) {
+      console.error("Update next action error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/journey/next-actions/:id", authenticateUser, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const action = await storage.getNextActions(req.user!.id);
+      const existing = action.find(a => a.id === id);
+
+      if (!existing) {
+        return res.status(404).json({ error: "Next action not found" });
+      }
+
+      if (existing.userId !== req.user!.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const deleted = await storage.deleteNextAction(id);
+
+      if (!deleted) {
+        return res.status(500).json({ error: "Failed to delete next action" });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete next action error:", error);
       res.status(500).json({ error: "Internal server error" });
     }
   });

@@ -14,13 +14,22 @@ import {
   type InsertGoal,
   type CheckIn,
   type InsertCheckIn,
+  type Plan,
+  type InsertPlan,
+  type Milestone,
+  type InsertMilestone,
+  type NextAction,
+  type InsertNextAction,
   createUserSchema,
   users, 
   conversations, 
   knowledgeBaseFiles,
   promptTemplates,
   goals,
-  checkIns
+  checkIns,
+  plans,
+  milestones,
+  nextActions
 } from "@shared/schema";
 import { hashPassword, verifyPassword } from "./auth";
 import { db } from "./db";
@@ -104,6 +113,25 @@ export interface IStorage {
     energy: number;
     focus: number;
   }[]>;
+
+  // Plan operations (Journey 2)
+  createPlan(plan: InsertPlan): Promise<Plan>;
+  getPlans(userId: string): Promise<Plan[]>;
+  getPlan(id: string): Promise<Plan | undefined>;
+  updatePlan(id: string, updates: Partial<Plan>): Promise<Plan | undefined>;
+  deletePlan(id: string): Promise<boolean>;
+
+  // Milestone operations
+  createMilestone(milestone: InsertMilestone): Promise<Milestone>;
+  getMilestones(planId: string): Promise<Milestone[]>;
+  updateMilestone(id: string, updates: Partial<Milestone>): Promise<Milestone | undefined>;
+  deleteMilestone(id: string): Promise<boolean>;
+
+  // Next Actions operations
+  createNextAction(action: InsertNextAction): Promise<NextAction>;
+  getNextActions(userId: string, planId?: string): Promise<NextAction[]>;
+  updateNextAction(id: string, updates: Partial<NextAction>): Promise<NextAction | undefined>;
+  deleteNextAction(id: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -604,6 +632,93 @@ export class DatabaseStorage implements IStorage {
       energy: Number(row.energy) || 0,
       focus: Number(row.focus) || 0
     }));
+  }
+
+  // Plan operations (Journey 2)
+  async createPlan(plan: InsertPlan): Promise<Plan> {
+    const [newPlan] = await db.insert(plans).values(plan).returning();
+    return newPlan;
+  }
+
+  async getPlans(userId: string): Promise<Plan[]> {
+    return await db.select().from(plans).where(eq(plans.userId, userId)).orderBy(desc(plans.createdAt));
+  }
+
+  async getPlan(id: string): Promise<Plan | undefined> {
+    const [plan] = await db.select().from(plans).where(eq(plans.id, id));
+    return plan;
+  }
+
+  async updatePlan(id: string, updates: Partial<Plan>): Promise<Plan | undefined> {
+    const [plan] = await db
+      .update(plans)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(plans.id, id))
+      .returning();
+    return plan;
+  }
+
+  async deletePlan(id: string): Promise<boolean> {
+    const result = await db.delete(plans).where(eq(plans.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Milestone operations
+  async createMilestone(milestone: InsertMilestone): Promise<Milestone> {
+    const [newMilestone] = await db.insert(milestones).values(milestone).returning();
+    return newMilestone;
+  }
+
+  async getMilestones(planId: string): Promise<Milestone[]> {
+    return await db
+      .select()
+      .from(milestones)
+      .where(eq(milestones.planId, planId))
+      .orderBy(milestones.order);
+  }
+
+  async updateMilestone(id: string, updates: Partial<Milestone>): Promise<Milestone | undefined> {
+    const [milestone] = await db
+      .update(milestones)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(milestones.id, id))
+      .returning();
+    return milestone;
+  }
+
+  async deleteMilestone(id: string): Promise<boolean> {
+    const result = await db.delete(milestones).where(eq(milestones.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Next Actions operations
+  async createNextAction(action: InsertNextAction): Promise<NextAction> {
+    const [newAction] = await db.insert(nextActions).values(action).returning();
+    return newAction;
+  }
+
+  async getNextActions(userId: string, planId?: string): Promise<NextAction[]> {
+    const query = db.select().from(nextActions).where(eq(nextActions.userId, userId));
+    
+    if (planId) {
+      return await query.where(and(eq(nextActions.userId, userId), eq(nextActions.planId, planId))).orderBy(desc(nextActions.createdAt));
+    }
+    
+    return await query.orderBy(desc(nextActions.createdAt));
+  }
+
+  async updateNextAction(id: string, updates: Partial<NextAction>): Promise<NextAction | undefined> {
+    const [action] = await db
+      .update(nextActions)
+      .set(updates)
+      .where(eq(nextActions.id, id))
+      .returning();
+    return action;
+  }
+
+  async deleteNextAction(id: string): Promise<boolean> {
+    const result = await db.delete(nextActions).where(eq(nextActions.id, id));
+    return (result.rowCount ?? 0) > 0;
   }
 }
 
