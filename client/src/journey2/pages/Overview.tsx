@@ -100,8 +100,8 @@ export default function Overview() {
   return (
     <div className="space-y-6">
       <PageHeader title="Welcome back">
-        <Link href="/journey/checkins/today" className="px-3 py-1 border rounded">Today’s Check-in</Link>
-        <Link href="/journey/goals/new" className="px-3 py-1 border rounded">Add Goal</Link>
+        <Link href="/daily" className="px-3 py-1 border rounded">Today’s Check-in</Link>
+        <Link href="/goals" className="px-3 py-1 border rounded">Add Goal</Link>
       </PageHeader>
 
       {isLoading ? (
@@ -125,7 +125,7 @@ export default function Overview() {
               <EmptyState
                 title="No suggestions yet"
                 message="Once you add goals and check in a few days, we’ll recommend the next 1–3 steps."
-                action={<Link href="/journey/goals/new" className="px-3 py-1 border rounded">Create your first goal</Link>}
+                action={<Link href="/goals" className="px-3 py-1 border rounded">Create your first goal</Link>}
               />
             ) : (
               <ul className="list-disc pl-5 space-y-1">
@@ -143,7 +143,7 @@ export default function Overview() {
               <EmptyState
                 title="Nothing here yet"
                 message="Log your first daily check-in to start your streak."
-                action={<Link href="/journey/checkins/today" className="px-3 py-1 border rounded">Today’s Check-in</Link>}
+                action={<Link href="/daily" className="px-3 py-1 border rounded">Today’s Check-in</Link>}
               />
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
