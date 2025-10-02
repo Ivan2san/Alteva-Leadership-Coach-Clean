@@ -10,11 +10,14 @@ import {
   type InsertKnowledgeBaseFile,
   type PromptTemplate,
   type InsertPromptTemplate,
+  type Goal,
+  type InsertGoal,
   createUserSchema,
   users, 
   conversations, 
   knowledgeBaseFiles,
-  promptTemplates
+  promptTemplates,
+  goals
 } from "@shared/schema";
 import { hashPassword, verifyPassword } from "./auth";
 import { db } from "./db";
@@ -67,6 +70,14 @@ export interface IStorage {
   updateKnowledgeBaseFile(id: string, updates: Partial<KnowledgeBaseFile>): Promise<KnowledgeBaseFile | undefined>;
   deleteKnowledgeBaseFile(id: string): Promise<boolean>;
   searchKnowledgeBaseFiles(query: string): Promise<KnowledgeBaseFile[]>;
+  
+  // Goal operations (Journey 2)
+  createGoal(goal: InsertGoal): Promise<Goal>;
+  getGoals(userId: string): Promise<Goal[]>;
+  getGoal(id: string): Promise<Goal | undefined>;
+  updateGoal(id: string, updates: Partial<Goal>): Promise<Goal | undefined>;
+  deleteGoal(id: string): Promise<boolean>;
+  getGoalsByStatus(userId: string, status: string): Promise<Goal[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -378,6 +389,43 @@ export class DatabaseStorage implements IStorage {
           ilike(knowledgeBaseFiles.description, `%${query}%`),
         )
       );
+  }
+
+  // Goal operations (Journey 2)
+  async createGoal(goal: InsertGoal): Promise<Goal> {
+    const [newGoal] = await db.insert(goals).values(goal).returning();
+    return newGoal;
+  }
+
+  async getGoals(userId: string): Promise<Goal[]> {
+    return await db.select().from(goals).where(eq(goals.userId, userId)).orderBy(desc(goals.createdAt));
+  }
+
+  async getGoal(id: string): Promise<Goal | undefined> {
+    const [goal] = await db.select().from(goals).where(eq(goals.id, id));
+    return goal;
+  }
+
+  async updateGoal(id: string, updates: Partial<Goal>): Promise<Goal | undefined> {
+    const [goal] = await db
+      .update(goals)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(goals.id, id))
+      .returning();
+    return goal;
+  }
+
+  async deleteGoal(id: string): Promise<boolean> {
+    const result = await db.delete(goals).where(eq(goals.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async getGoalsByStatus(userId: string, status: string): Promise<Goal[]> {
+    return await db
+      .select()
+      .from(goals)
+      .where(and(eq(goals.userId, userId), eq(goals.status, status)))
+      .orderBy(desc(goals.createdAt));
   }
 }
 

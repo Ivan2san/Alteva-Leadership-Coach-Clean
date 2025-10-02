@@ -7,6 +7,7 @@ import {
   insertPromptTemplateSchema,
   lgp360ReportSchema,
   messageSchema,
+  insertGoalSchema,
 } from "@shared/schema";
 import { ObjectStorageService } from "./objectStorage";
 import { registerAuthRoutes } from "./auth-routes";
@@ -781,6 +782,121 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Document analysis error:", error);
       res.status(500).json({ error: "Failed to analyze document" });
+    }
+  });
+
+  // Journey 2 - Goals API
+  app.get("/api/journey/goals", authenticateUser, async (req, res) => {
+    try {
+      const goals = await storage.getGoals(req.user!.id);
+      res.json(goals);
+    } catch (error) {
+      console.error("Get goals error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/journey/goals", authenticateUser, async (req, res) => {
+    try {
+      const validationResult = insertGoalSchema.safeParse({
+        ...req.body,
+        userId: req.user!.id,
+      });
+
+      if (!validationResult.success) {
+        return res.status(400).json({
+          error: "Invalid goal data",
+          details: validationResult.error.issues,
+        });
+      }
+
+      const goal = await storage.createGoal(validationResult.data);
+      res.json(goal);
+    } catch (error) {
+      console.error("Create goal error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/journey/goals/:id", authenticateUser, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const goal = await storage.getGoal(id);
+
+      if (!goal) {
+        return res.status(404).json({ error: "Goal not found" });
+      }
+
+      if (goal.userId !== req.user!.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      res.json(goal);
+    } catch (error) {
+      console.error("Get goal error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.patch("/api/journey/goals/:id", authenticateUser, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const goal = await storage.getGoal(id);
+
+      if (!goal) {
+        return res.status(404).json({ error: "Goal not found" });
+      }
+
+      if (goal.userId !== req.user!.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const updatedGoal = await storage.updateGoal(id, {
+        ...req.body,
+        updatedAt: new Date(),
+      });
+
+      res.json(updatedGoal);
+    } catch (error) {
+      console.error("Update goal error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/journey/goals/:id", authenticateUser, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const goal = await storage.getGoal(id);
+
+      if (!goal) {
+        return res.status(404).json({ error: "Goal not found" });
+      }
+
+      if (goal.userId !== req.user!.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const deleted = await storage.deleteGoal(id);
+
+      if (!deleted) {
+        return res.status(500).json({ error: "Failed to delete goal" });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete goal error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/journey/goals/status/:status", authenticateUser, async (req, res) => {
+    try {
+      const { status } = req.params;
+      const goals = await storage.getGoalsByStatus(req.user!.id, status);
+      res.json(goals);
+    } catch (error) {
+      console.error("Get goals by status error:", error);
+      res.status(500).json({ error: "Internal server error" });
     }
   });
 
