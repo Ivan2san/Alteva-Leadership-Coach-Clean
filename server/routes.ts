@@ -8,6 +8,7 @@ import {
   lgp360ReportSchema,
   messageSchema,
   insertGoalSchema,
+  insertCheckInSchema,
 } from "@shared/schema";
 import { ObjectStorageService } from "./objectStorage";
 import { registerAuthRoutes } from "./auth-routes";
@@ -896,6 +897,131 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(goals);
     } catch (error) {
       console.error("Get goals by status error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Journey 2 - Check-ins API
+  app.get("/api/journey/check-ins", authenticateUser, async (req, res) => {
+    try {
+      const { limit } = req.query;
+      const checkIns = await storage.getCheckIns(
+        req.user!.id,
+        limit ? parseInt(limit as string) : undefined
+      );
+      res.json(checkIns);
+    } catch (error) {
+      console.error("Get check-ins error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/journey/check-ins", authenticateUser, async (req, res) => {
+    try {
+      const validationResult = insertCheckInSchema.safeParse({
+        ...req.body,
+        userId: req.user!.id,
+      });
+
+      if (!validationResult.success) {
+        return res.status(400).json({
+          error: "Invalid check-in data",
+          details: validationResult.error.issues,
+        });
+      }
+
+      const checkIn = await storage.createCheckIn(validationResult.data);
+      res.json(checkIn);
+    } catch (error) {
+      console.error("Create check-in error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/journey/check-ins/streak", authenticateUser, async (req, res) => {
+    try {
+      const streak = await storage.getCheckInStreak(req.user!.id);
+      res.json({ streak });
+    } catch (error) {
+      console.error("Get check-in streak error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/journey/check-ins/today", authenticateUser, async (req, res) => {
+    try {
+      const today = new Date();
+      const checkIn = await storage.getCheckInByDate(req.user!.id, today);
+      res.json(checkIn || null);
+    } catch (error) {
+      console.error("Get today's check-in error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/journey/check-ins/:id", authenticateUser, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const checkIn = await storage.getCheckIn(id);
+
+      if (!checkIn) {
+        return res.status(404).json({ error: "Check-in not found" });
+      }
+
+      if (checkIn.userId !== req.user!.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      res.json(checkIn);
+    } catch (error) {
+      console.error("Get check-in error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.patch("/api/journey/check-ins/:id", authenticateUser, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const checkIn = await storage.getCheckIn(id);
+
+      if (!checkIn) {
+        return res.status(404).json({ error: "Check-in not found" });
+      }
+
+      if (checkIn.userId !== req.user!.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const updatedCheckIn = await storage.updateCheckIn(id, req.body);
+      res.json(updatedCheckIn);
+    } catch (error) {
+      console.error("Update check-in error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/journey/check-ins/:id", authenticateUser, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const checkIn = await storage.getCheckIn(id);
+
+      if (!checkIn) {
+        return res.status(404).json({ error: "Check-in not found" });
+      }
+
+      if (checkIn.userId !== req.user!.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const deleted = await storage.deleteCheckIn(id);
+
+      if (!deleted) {
+        return res.status(500).json({ error: "Failed to delete check-in" });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete check-in error:", error);
       res.status(500).json({ error: "Internal server error" });
     }
   });

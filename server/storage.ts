@@ -12,12 +12,15 @@ import {
   type InsertPromptTemplate,
   type Goal,
   type InsertGoal,
+  type CheckIn,
+  type InsertCheckIn,
   createUserSchema,
   users, 
   conversations, 
   knowledgeBaseFiles,
   promptTemplates,
-  goals
+  goals,
+  checkIns
 } from "@shared/schema";
 import { hashPassword, verifyPassword } from "./auth";
 import { db } from "./db";
@@ -78,6 +81,15 @@ export interface IStorage {
   updateGoal(id: string, updates: Partial<Goal>): Promise<Goal | undefined>;
   deleteGoal(id: string): Promise<boolean>;
   getGoalsByStatus(userId: string, status: string): Promise<Goal[]>;
+
+  // Check-in operations (Journey 2)
+  createCheckIn(checkIn: InsertCheckIn): Promise<CheckIn>;
+  getCheckIns(userId: string, limit?: number): Promise<CheckIn[]>;
+  getCheckIn(id: string): Promise<CheckIn | undefined>;
+  updateCheckIn(id: string, updates: Partial<CheckIn>): Promise<CheckIn | undefined>;
+  deleteCheckIn(id: string): Promise<boolean>;
+  getCheckInStreak(userId: string): Promise<number>;
+  getCheckInByDate(userId: string, date: Date): Promise<CheckIn | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -426,6 +438,96 @@ export class DatabaseStorage implements IStorage {
       .from(goals)
       .where(and(eq(goals.userId, userId), eq(goals.status, status)))
       .orderBy(desc(goals.createdAt));
+  }
+
+  // Check-in operations (Journey 2)
+  async createCheckIn(checkIn: InsertCheckIn): Promise<CheckIn> {
+    const [newCheckIn] = await db.insert(checkIns).values(checkIn).returning();
+    return newCheckIn;
+  }
+
+  async getCheckIns(userId: string, limit?: number): Promise<CheckIn[]> {
+    const query = db
+      .select()
+      .from(checkIns)
+      .where(eq(checkIns.userId, userId))
+      .orderBy(desc(checkIns.date));
+    
+    if (limit) {
+      return await query.limit(limit);
+    }
+    return await query;
+  }
+
+  async getCheckIn(id: string): Promise<CheckIn | undefined> {
+    const [checkIn] = await db.select().from(checkIns).where(eq(checkIns.id, id));
+    return checkIn;
+  }
+
+  async updateCheckIn(id: string, updates: Partial<CheckIn>): Promise<CheckIn | undefined> {
+    const [checkIn] = await db
+      .update(checkIns)
+      .set(updates)
+      .where(eq(checkIns.id, id))
+      .returning();
+    return checkIn;
+  }
+
+  async deleteCheckIn(id: string): Promise<boolean> {
+    const result = await db.delete(checkIns).where(eq(checkIns.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async getCheckInStreak(userId: string): Promise<number> {
+    const allCheckIns = await db
+      .select()
+      .from(checkIns)
+      .where(eq(checkIns.userId, userId))
+      .orderBy(desc(checkIns.date));
+
+    if (allCheckIns.length === 0) return 0;
+
+    let streak = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    let currentDate = new Date(today);
+    
+    for (const checkIn of allCheckIns) {
+      const checkInDate = new Date(checkIn.date);
+      checkInDate.setHours(0, 0, 0, 0);
+      
+      if (checkInDate.getTime() === currentDate.getTime()) {
+        streak++;
+        currentDate.setDate(currentDate.getDate() - 1);
+      } else if (checkInDate.getTime() < currentDate.getTime()) {
+        break;
+      }
+    }
+    
+    return streak;
+  }
+
+  async getCheckInByDate(userId: string, date: Date): Promise<CheckIn | undefined> {
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+    
+    const [checkIn] = await db
+      .select()
+      .from(checkIns)
+      .where(
+        and(
+          eq(checkIns.userId, userId),
+          sql`${checkIns.date} >= ${startOfDay}`,
+          sql`${checkIns.date} <= ${endOfDay}`
+        )
+      )
+      .limit(1);
+    
+    return checkIn;
   }
 }
 
