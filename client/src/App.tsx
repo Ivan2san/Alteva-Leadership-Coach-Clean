@@ -1,18 +1,19 @@
 import React from "react";
-import { Switch, Route, Redirect } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
+
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
+
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthWrapper } from "@/components/AuthWrapper";
+
 import { flags } from "@/lib/flags";
 
-<<<<<<< HEAD
-// v1 pages
-=======
 // v1 pages (existing)
->>>>>>> 8dd1e24 (feat(journey): add v2 router gate + dashboard stub; fix single listen; add free-ports script)
 import Home from "@/pages/home";
+import Login from "@/pages/login";
+import Signup from "@/pages/signup";
 import PromptSelection from "@/pages/prompt-selection";
 import Chat from "@/pages/chat";
 import KnowledgeBase from "@/pages/knowledge-base";
@@ -22,49 +23,53 @@ import PromptLibrary from "@/pages/prompt-library";
 import Settings from "@/pages/settings";
 import WelcomeGuide from "@/pages/welcome-guide";
 import LGP360Report from "@/pages/lgp360-report";
-import Login from "@/pages/login";
-import Signup from "@/pages/signup";
 import NotFound from "@/pages/not-found";
-<<<<<<< HEAD
-import Dashboard from "@/pages/dashboard";
+import Dashboard from "@/pages/dashboard"; // stub exists
 
-// v2
-import JourneyV2Router from "@/journey2/Router";
-=======
-import Dashboard from "@/pages/dashboard"; // your stub
->>>>>>> 8dd1e24 (feat(journey): add v2 router gate + dashboard stub; fix single listen; add free-ports script)
-
-// v2 pages (new)
+// v2 router
 import JourneyV2Router from "@/journey2/Router";
 
-function HomeRedirect() {
-  return flags.journeyV2 ? <Redirect to="/journey" /> : <Redirect to="/dashboard" />;
+// When journeyV2 is ON, push "/" -> "/journey"
+function JumpToJourney() {
+  const [, navigate] = useLocation();
+  React.useEffect(() => {
+    navigate("/journey");
+  }, [navigate]);
+  return null;
 }
 
-function Routes() {
+// Root route: v1 shows Home, v2 jumps to /journey
+function Root() {
+  return flags.journeyV2 ? <JumpToJourney /> : <Home />;
+}
+
+function AppRouter() {
   return (
     <Switch>
-      <Route path="/" component={HomeRedirect} />
+      {/* Root */}
+      <Route path="/" component={Root} />
 
-      {/* v1 (existing) */}
+      {/* Common pages */}
+      <Route path="/login" component={Login} />
+      <Route path="/signup" component={Signup} />
+      <Route path="/knowledge-base" component={KnowledgeBase} />
+      <Route path="/conversations" component={Conversations} />
+      <Route path="/analytics" component={Analytics} />
+      <Route path="/prompt-library" component={PromptLibrary} />
+      <Route path="/settings" component={Settings} />
+      <Route path="/guide" component={WelcomeGuide} />
+      <Route path="/lgp360" component={LGP360Report} />
+
+      {/* v1-only routes */}
       {!flags.journeyV2 && (
         <>
           <Route path="/dashboard" component={Dashboard} />
           <Route path="/prompts/:topic" component={PromptSelection} />
           <Route path="/chat/:topic" component={Chat} />
-          <Route path="/knowledge-base" component={KnowledgeBase} />
-          <Route path="/conversations" component={Conversations} />
-          <Route path="/analytics" component={Analytics} />
-          <Route path="/prompt-library" component={PromptLibrary} />
-          <Route path="/settings" component={Settings} />
-          <Route path="/guide" component={WelcomeGuide} />
-          <Route path="/lgp360" component={LGP360Report} />
-          <Route path="/login" component={Login} />
-          <Route path="/signup" component={Signup} />
         </>
       )}
 
-      {/* v2 (new) */}
+      {/* v2 (captures /journey/**) */}
       {flags.journeyV2 && <Route path="/journey/:rest*" component={JourneyV2Router} />}
 
       {/* 404 */}
@@ -80,7 +85,7 @@ export default function App() {
         <AuthWrapper>
           <div className="min-h-screen bg-background">
             <Toaster />
-            <Routes />
+            <AppRouter />
           </div>
         </AuthWrapper>
       </TooltipProvider>
