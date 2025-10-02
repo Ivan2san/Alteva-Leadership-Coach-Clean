@@ -1,4 +1,3 @@
-// client/src/App.tsx
 import React from "react";
 import { Switch, Route, useLocation } from "wouter";
 
@@ -11,7 +10,7 @@ import { AuthWrapper } from "@/components/AuthWrapper";
 
 import { flags } from "@/lib/flags";
 
-// v1 pages
+// v1 pages (existing)
 import Home from "@/pages/home";
 import Login from "@/pages/login";
 import Signup from "@/pages/signup";
@@ -25,9 +24,9 @@ import Settings from "@/pages/settings";
 import WelcomeGuide from "@/pages/welcome-guide";
 import LGP360Report from "@/pages/lgp360-report";
 import NotFound from "@/pages/not-found";
-import Dashboard from "@/pages/dashboard";
+import Dashboard from "@/pages/dashboard"; // stub exists
 
-// v2
+// v2 router
 import JourneyV2Router from "@/journey2/Router";
 
 // When journeyV2 is ON, push "/" -> "/journey"
