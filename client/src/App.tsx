@@ -7,9 +7,9 @@ import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthWrapper } from "@/components/AuthWrapper";
+import { useAuth } from "@/hooks/useAuth";
 
 // v1 pages
-import Home from "@/pages/home";
 import Login from "@/pages/login";
 import Signup from "@/pages/signup";
 import PromptSelection from "@/pages/prompt-selection";
@@ -27,9 +27,22 @@ import Dashboard from "@/pages/dashboard"; // stub exists
 import Profile from "@/pages/profile";
 import PreparePage from "@/pages/prepare";
 
-// Root route: shows Profile for authenticated users, Home for others
+// Root route: redirects authenticated users to Profile, others to Login
 function Root() {
-  return <Home />;
+  const [, navigate] = useLocation();
+  const { isAuthenticated, isLoading } = useAuth();
+
+  React.useEffect(() => {
+    if (!isLoading) {
+      if (isAuthenticated) {
+        navigate("/profile");
+      } else {
+        navigate("/login");
+      }
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+
+  return null;
 }
 
 function AppRouter() {
