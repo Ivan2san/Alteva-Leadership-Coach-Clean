@@ -28,6 +28,7 @@ import {
   TrendingUp
 } from "lucide-react";
 import { format } from "date-fns";
+import MainNavigation from "@/components/MainNavigation";
 
 export default function ProfilePage() {
   const { user } = useAuth();
@@ -402,6 +403,7 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      <MainNavigation />
       
       <main className="max-w-7xl mx-auto px-4 py-6">
         <div className="space-y-6">

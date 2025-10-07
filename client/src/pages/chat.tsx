@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { topicConfigurations } from "@/lib/topic-configurations";
 import { useChat } from "@/hooks/use-chat";
+import MainNavigation from "@/components/MainNavigation";
 
 interface ChatProps {
   params: { topic: string };
@@ -89,6 +90,7 @@ export default function Chat({ params }: ChatProps) {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      <MainNavigation />
       
       <main className="max-w-md mx-auto px-4 py-6">
         <Breadcrumb items={[

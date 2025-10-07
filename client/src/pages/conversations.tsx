@@ -4,6 +4,8 @@ import { Target, Users, Activity } from "lucide-react";
 import { BackButton } from "@/components/back-button";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { useLocation } from "wouter";
+import Header from "@/components/header";
+import MainNavigation from "@/components/MainNavigation";
 
 export default function ConversationsPage() {
   const [, navigate] = useLocation();
@@ -56,9 +58,13 @@ export default function ConversationsPage() {
   ];
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <BackButton />
-      <Breadcrumb items={[{ label: "Conversations", current: true }]} />
+    <div className="min-h-screen bg-background">
+      <Header />
+      <MainNavigation />
+      
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <BackButton />
+        <Breadcrumb items={[{ label: "Conversations", current: true }]} />
       
       <div className="mb-12 text-center">
         <h1 className="text-4xl font-bold mb-3">Conversation Tools</h1>
@@ -98,6 +104,7 @@ export default function ConversationsPage() {
             </Card>
           );
         })}
+      </div>
       </div>
     </div>
   );

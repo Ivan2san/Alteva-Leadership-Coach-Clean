@@ -1,5 +1,5 @@
 import { useLocation } from "wouter";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, MessageSquare, MessagesSquare } from "lucide-react";
 
 export default function MainNavigation() {
@@ -8,7 +8,7 @@ export default function MainNavigation() {
   const getActiveTab = () => {
     if (location === "/profile") return "profile";
     if (location.startsWith("/chat")) return "chat";
-    if (location === "/conversations") return "conversations";
+    if (location.startsWith("/conversations")) return "conversations";
     return "profile";
   };
 
@@ -19,7 +19,7 @@ export default function MainNavigation() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto">
+    <div className="w-full max-w-md mx-auto py-4">
       <Tabs value={getActiveTab()} onValueChange={handleTabChange} className="w-full">
         <TabsList className="w-full grid grid-cols-3">
           <TabsTrigger value="profile" className="flex items-center gap-2">
@@ -35,24 +35,6 @@ export default function MainNavigation() {
             <span>Conversations</span>
           </TabsTrigger>
         </TabsList>
-
-        <TabsContent value="profile" className="mt-4">
-          <div className="text-center py-8 text-muted-foreground">
-            Profile Dashboard - Coming Soon
-          </div>
-        </TabsContent>
-
-        <TabsContent value="chat" className="mt-4">
-          <div className="text-center py-8 text-muted-foreground">
-            Enhanced Chat - Coming Soon
-          </div>
-        </TabsContent>
-
-        <TabsContent value="conversations" className="mt-4">
-          <div className="text-center py-8 text-muted-foreground">
-            Conversations Hub - Coming Soon
-          </div>
-        </TabsContent>
       </Tabs>
     </div>
   );

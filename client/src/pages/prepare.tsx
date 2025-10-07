@@ -9,6 +9,8 @@ import { BackButton } from "@/components/back-button";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { ChevronLeft, ChevronRight, Target, Users, MessageSquare, AlertTriangle, CheckSquare, Loader2, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import Header from "@/components/header";
+import MainNavigation from "@/components/MainNavigation";
 
 type WizardStep = "goal" | "stakeholders" | "keyPoints" | "blockers" | "actions" | "review";
 
@@ -196,8 +198,12 @@ Generated: ${new Date(generatedBrief.createdAt).toLocaleDateString()}
 
   if (generatedBrief) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <BackButton />
+      <div className="min-h-screen bg-background">
+        <Header />
+        <MainNavigation />
+        
+        <div className="container mx-auto px-4 py-8 max-w-4xl">
+          <BackButton />
         <Breadcrumb items={[
           { label: "Conversations", href: "/conversations" },
           { label: "Prepare", current: true }
@@ -250,6 +256,7 @@ Generated: ${new Date(generatedBrief.createdAt).toLocaleDateString()}
             </CardContent>
           </Card>
         </div>
+        </div>
       </div>
     );
   }
@@ -257,8 +264,12 @@ Generated: ${new Date(generatedBrief.createdAt).toLocaleDateString()}
   const StepIcon = stepConfig[currentStep].icon;
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-3xl">
-      <BackButton />
+    <div className="min-h-screen bg-background">
+      <Header />
+      <MainNavigation />
+      
+      <div className="container mx-auto px-4 py-8 max-w-3xl">
+        <BackButton />
       <Breadcrumb items={[
         { label: "Conversations", href: "/conversations" },
         { label: "Prepare", current: true }
@@ -428,6 +439,7 @@ Generated: ${new Date(generatedBrief.createdAt).toLocaleDateString()}
             </div>
           </CardContent>
         </Card>
+      </div>
       </div>
     </div>
   );
