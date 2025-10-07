@@ -8,9 +8,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthWrapper } from "@/components/AuthWrapper";
 
-import { flags } from "@/lib/flags";
-import JourneyV2Router from "@/journey2/Router";
-
 // v1 pages
 import Home from "@/pages/home";
 import Login from "@/pages/login";
@@ -30,18 +27,9 @@ import Dashboard from "@/pages/dashboard"; // stub exists
 import Profile from "@/pages/profile";
 import PreparePage from "@/pages/prepare";
 
-// When journeyV2 is ON, push "/" -> "/journey"
-function JumpToJourney() {
-  const [, navigate] = useLocation();
-  React.useEffect(() => {
-    navigate("/journey");
-  }, [navigate]);
-  return null;
-}
-
-// Root route: v1 shows Home, v2 jumps to /journey
+// Root route: shows Profile for authenticated users, Home for others
 function Root() {
-  return flags.journeyV2 ? <JumpToJourney /> : <Home />;
+  return <Home />;
 }
 
 function AppRouter() {
@@ -64,22 +52,10 @@ function AppRouter() {
       <Route path="/guide" component={WelcomeGuide} />
       <Route path="/lgp360" component={LGP360Report} />
 
-      {/* v1-only routes */}
-      {!flags.journeyV2 && (
-        <>
-          <Route path="/dashboard" component={Dashboard} />
-          <Route path="/prompts/:topic" component={PromptSelection} />
-          <Route path="/chat/:topic" component={Chat} />
-        </>
-      )}
-
-      {/* v2 (captures /journey/**) */}
-      {flags.journeyV2 && (
-        <>
-          <Route path="/journey" component={JourneyV2Router} />
-          <Route path="/journey/:rest*" component={JourneyV2Router} />
-        </>
-      )}
+      {/* Chat routes */}
+      <Route path="/dashboard" component={Dashboard} />
+      <Route path="/prompts/:topic" component={PromptSelection} />
+      <Route path="/chat/:topic" component={Chat} />
 
       {/* 404 */}
       <Route component={NotFound} />
