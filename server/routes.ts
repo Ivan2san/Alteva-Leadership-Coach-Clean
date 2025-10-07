@@ -809,6 +809,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Profile Update APIs
+  app.patch("/api/profile/growth-profile", authenticateUser, async (req, res) => {
+    try {
+      const { growthProfile } = req.body;
+      const updatedUser = await storage.updateUser(req.user!.id, { growthProfile });
+      if (!updatedUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.json({ success: true, user: updatedUser });
+    } catch (error) {
+      console.error("Update growth profile error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.patch("/api/profile/red-zones", authenticateUser, async (req, res) => {
+    try {
+      const { redZones } = req.body;
+      const updatedUser = await storage.updateUser(req.user!.id, { redZones });
+      if (!updatedUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.json({ success: true, user: updatedUser });
+    } catch (error) {
+      console.error("Update red zones error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.patch("/api/profile/green-zones", authenticateUser, async (req, res) => {
+    try {
+      const { greenZones } = req.body;
+      const updatedUser = await storage.updateUser(req.user!.id, { greenZones });
+      if (!updatedUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.json({ success: true, user: updatedUser });
+    } catch (error) {
+      console.error("Update green zones error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.patch("/api/profile/recommendations", authenticateUser, async (req, res) => {
+    try {
+      const { recommendations } = req.body;
+      const updatedUser = await storage.updateUser(req.user!.id, { recommendations });
+      if (!updatedUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.json({ success: true, user: updatedUser });
+    } catch (error) {
+      console.error("Update recommendations error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   // Success Checkpoints API
   app.post("/api/checkpoints", authenticateUser, async (req, res) => {
     try {

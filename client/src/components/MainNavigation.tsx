@@ -1,10 +1,26 @@
+import { useLocation } from "wouter";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, MessageSquare, MessagesSquare } from "lucide-react";
 
 export default function MainNavigation() {
+  const [location, navigate] = useLocation();
+  
+  const getActiveTab = () => {
+    if (location === "/profile") return "profile";
+    if (location === "/chat") return "chat";
+    if (location === "/conversations") return "conversations";
+    return "profile";
+  };
+
+  const handleTabChange = (value: string) => {
+    if (value === "profile") navigate("/profile");
+    if (value === "chat") navigate("/chat");
+    if (value === "conversations") navigate("/conversations");
+  };
+
   return (
     <div className="w-full max-w-md mx-auto">
-      <Tabs defaultValue="profile" className="w-full">
+      <Tabs value={getActiveTab()} onValueChange={handleTabChange} className="w-full">
         <TabsList className="w-full grid grid-cols-3">
           <TabsTrigger value="profile" className="flex items-center gap-2">
             <User size={18} />

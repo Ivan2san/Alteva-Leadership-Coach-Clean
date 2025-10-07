@@ -27,6 +27,7 @@ import LGP360Report from "@/pages/lgp360-report";
 import Onboarding from "@/pages/onboarding";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard"; // stub exists
+import Profile from "@/pages/profile";
 
 // When journeyV2 is ON, push "/" -> "/journey"
 function JumpToJourney() {
@@ -52,6 +53,7 @@ function AppRouter() {
       <Route path="/login" component={Login} />
       <Route path="/signup" component={Signup} />
       <Route path="/onboarding" component={Onboarding} />
+      <Route path="/profile" component={Profile} />
       <Route path="/knowledge-base" component={KnowledgeBase} />
       <Route path="/conversations" component={Conversations} />
       <Route path="/analytics" component={Analytics} />
