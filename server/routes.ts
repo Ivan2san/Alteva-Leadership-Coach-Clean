@@ -919,6 +919,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Prepare Briefs API
+  app.post("/api/prepare-briefs", authenticateUser, async (req, res) => {
+    try {
+      const { title, goal, stakeholders, keyPoints, blockers, actions } = req.body;
+
+      // Generate AI brief and checklist
+      const prompt = `You are a leadership coach helping someone prepare for an important conversation.
+
+Based on the following information, create a concise, practical one-page brief (max 300 words) and a checklist of 4-6 key items to remember.
+
+CONVERSATION PREP:
+Title: ${title}
+Goal: ${goal}
+${stakeholders.length > 0 ? `Stakeholders: ${stakeholders.join(", ")}` : ""}
+${keyPoints.length > 0 ? `Key Points: ${keyPoints.join("; ")}` : ""}
+${blockers.length > 0 ? `Potential Blockers: ${blockers.join("; ")}` : ""}
+${actions.length > 0 ? `Desired Actions: ${actions.join("; ")}` : ""}
+
+Return ONLY a JSON object (no other text) with:
+{
+  "brief": "string (conversational, encouraging tone, max 300 words)",
+  "checklist": ["item1", "item2", "item3", "item4", "item5", "item6"]
+}`;
+
+      const aiResponse = await openaiService.getLeadershipResponse(prompt, "conversation_prep", []);
+      const parsed = JSON.parse(aiResponse.message);
+
+      const brief = await storage.createPrepareBrief({
+        userId: req.user!.id,
+        title,
+        goal,
+        stakeholders,
+        keyPoints,
+        blockers,
+        actions,
+        brief: parsed.brief,
+        checklist: parsed.checklist.map((item: string) => ({ item, completed: false })),
+      });
+
+      // Track checkpoint
+      await storage.createCheckpoint({
+        userId: req.user!.id,
+        type: 'first_brief',
+        metadata: { briefId: brief.id },
+      });
+
+      res.json(brief);
+    } catch (error) {
+      console.error("Create prepare brief error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/prepare-briefs", authenticateUser, async (req, res) => {
+    try {
+      const briefs = await storage.getPrepareBriefs(req.user!.id);
+      res.json(briefs);
+    } catch (error) {
+      console.error("Get prepare briefs error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/prepare-briefs/:id", authenticateUser, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const brief = await storage.getPrepareBrief(id);
+
+      if (!brief) {
+        return res.status(404).json({ error: "Brief not found" });
+      }
+
+      if (brief.userId !== req.user!.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      res.json(brief);
+    } catch (error) {
+      console.error("Get prepare brief error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   // Journey 2 - Goals API
   app.get("/api/journey/goals", authenticateUser, async (req, res) => {
     try {

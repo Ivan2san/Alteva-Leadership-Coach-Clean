@@ -24,12 +24,47 @@ export async function seedAdminUser() {
     
     if (existingAdmin) {
       console.log("Admin user already exists:", ADMIN_USER.email);
+      
+      // Add sample 360 data if missing (for dev testing)
+      if (!existingAdmin.lgp360Assessment && process.env.NODE_ENV === 'development') {
+        console.log("Adding sample 360 data to admin user for testing...");
+        const updatedAdmin = await storage.updateUser(existingAdmin.id, {
+          lgp360Assessment: "Sample 360 Assessment: Strong strategic thinking, excellent communication skills. Areas for development: delegation and time management.",
+          lgp360OriginalContent: "Sample 360 Report Content",
+          lgp360UploadedAt: new Date(),
+          growthProfile: ["Strategic thinker", "Strong communicator", "Collaborative leader"],
+          personalValues: ["Integrity", "Innovation", "Teamwork"],
+          redZones: ["Tendency to micromanage", "Difficulty delegating"],
+          greenZones: ["Strategic planning", "Team building", "Communication"],
+          recommendations: ["Practice delegation", "Set clearer boundaries", "Develop time management skills"],
+        });
+        console.log("Sample 360 data added to admin user");
+        return updatedAdmin || existingAdmin;
+      }
+      
       return existingAdmin;
     }
 
     // Create admin user with proper duplicate handling
     console.log("Creating admin user...");
     const adminUser = await storage.createUser(ADMIN_USER);
+    
+    // Add sample 360 data for dev testing
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Adding sample 360 data to new admin user...");
+      const updatedAdmin = await storage.updateUser(adminUser.id, {
+        lgp360Assessment: "Sample 360 Assessment: Strong strategic thinking, excellent communication skills. Areas for development: delegation and time management.",
+        lgp360OriginalContent: "Sample 360 Report Content",
+        lgp360UploadedAt: new Date(),
+        growthProfile: ["Strategic thinker", "Strong communicator", "Collaborative leader"],
+        personalValues: ["Integrity", "Innovation", "Teamwork"],
+        redZones: ["Tendency to micromanage", "Difficulty delegating"],
+        greenZones: ["Strategic planning", "Team building", "Communication"],
+        recommendations: ["Practice delegation", "Set clearer boundaries", "Develop time management skills"],
+      });
+      console.log("Admin user created with sample 360 data:", ADMIN_USER.email);
+      return updatedAdmin || adminUser;
+    }
     
     console.log("Admin user created successfully:", ADMIN_USER.email);
     

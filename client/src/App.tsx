@@ -28,6 +28,7 @@ import Onboarding from "@/pages/onboarding";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard"; // stub exists
 import Profile from "@/pages/profile";
+import PreparePage from "@/pages/prepare";
 
 // When journeyV2 is ON, push "/" -> "/journey"
 function JumpToJourney() {
@@ -56,6 +57,7 @@ function AppRouter() {
       <Route path="/profile" component={Profile} />
       <Route path="/knowledge-base" component={KnowledgeBase} />
       <Route path="/conversations" component={Conversations} />
+      <Route path="/conversations/prepare" component={PreparePage} />
       <Route path="/analytics" component={Analytics} />
       <Route path="/prompt-library" component={PromptLibrary} />
       <Route path="/settings" component={Settings} />

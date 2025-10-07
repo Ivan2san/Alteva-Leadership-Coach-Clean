@@ -753,13 +753,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getNextActions(userId: string, planId?: string): Promise<NextAction[]> {
-    const query = db.select().from(nextActions).where(eq(nextActions.userId, userId));
-    
     if (planId) {
-      return await query.where(and(eq(nextActions.userId, userId), eq(nextActions.planId, planId))).orderBy(desc(nextActions.createdAt));
+      return await db
+        .select()
+        .from(nextActions)
+        .where(and(eq(nextActions.userId, userId), eq(nextActions.planId, planId)))
+        .orderBy(desc(nextActions.createdAt));
     }
     
-    return await query.orderBy(desc(nextActions.createdAt));
+    return await db
+      .select()
+      .from(nextActions)
+      .where(eq(nextActions.userId, userId))
+      .orderBy(desc(nextActions.createdAt));
   }
 
   async updateNextAction(id: string, updates: Partial<NextAction>): Promise<NextAction | undefined> {
