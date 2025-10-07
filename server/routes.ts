@@ -789,6 +789,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // AI Document Analysis endpoint with structured extraction
+  app.post("/api/lgp360/analyze-structured", authenticateUser, upload.single("document"), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No document uploaded" });
+      }
+
+      const analysisResult = await openaiService.analyzeDocument360Structured(
+        req.file.buffer,
+        req.file.originalname,
+        req.file.mimetype
+      );
+
+      res.json(analysisResult);
+    } catch (error) {
+      console.error("Structured document analysis error:", error);
+      res.status(500).json({ error: "Failed to analyze document" });
+    }
+  });
+
+  // Success Checkpoints API
+  app.post("/api/checkpoints", authenticateUser, async (req, res) => {
+    try {
+      const checkpoint = await storage.createCheckpoint({
+        userId: req.user!.id,
+        type: req.body.type,
+        metadata: req.body.metadata,
+      });
+      res.json(checkpoint);
+    } catch (error) {
+      console.error("Create checkpoint error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/checkpoints", authenticateUser, async (req, res) => {
+    try {
+      const checkpoints = await storage.getUserCheckpoints(req.user!.id);
+      res.json(checkpoints);
+    } catch (error) {
+      console.error("Get checkpoints error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   // Journey 2 - Goals API
   app.get("/api/journey/goals", authenticateUser, async (req, res) => {
     try {

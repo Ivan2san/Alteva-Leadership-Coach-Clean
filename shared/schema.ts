@@ -100,6 +100,13 @@ export const loginSchema = z.object({
 export const lgp360ReportSchema = z.object({
   originalContent: z.string().optional(),
   assessment: z.string().min(1, "Professional coaching assessment is required"),
+  name: z.string().optional(),
+  role: z.string().optional(),
+  personalValues: z.array(z.string()).optional(),
+  growthProfile: z.any().optional(),
+  redZones: z.array(z.string()).optional(),
+  greenZones: z.array(z.string()).optional(),
+  recommendations: z.array(z.string()).optional(),
 });
 
 export const insertConversationSchema = createInsertSchema(conversations).omit({

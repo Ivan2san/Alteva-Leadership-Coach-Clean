@@ -61,8 +61,8 @@ export default function SignupPage() {
         description: `Welcome to Leadership Coach, ${result.user.fullName}!`,
       });
 
-      // Redirect to welcome guide for new users
-      setLocation("/guide?welcome=true");
+      // Redirect to onboarding to upload 360 report
+      setLocation("/onboarding");
     } catch (error) {
       console.error("Signup error:", error);
       toast({

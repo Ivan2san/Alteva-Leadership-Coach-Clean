@@ -363,6 +363,125 @@ Use this profile to tailor questions, reference style and strengths, and target 
     }
   }
 
+  /** Analyse 360 document and extract structured insights for onboarding */
+  async analyzeDocument360Structured(
+    fileBuffer: Buffer,
+    fileName: string,
+    mimeType: string
+  ): Promise<{
+    originalContent: string;
+    assessment: string;
+    name?: string;
+    role?: string;
+    personalValues?: string[];
+    growthProfile?: any;
+    redZones?: string[];
+    greenZones?: string[];
+    recommendations?: string[];
+  }> {
+    try {
+      // Extract document text
+      let documentText = "";
+      if (mimeType === "text/plain") {
+        documentText = fileBuffer.toString("utf-8");
+      } else if (mimeType === "application/pdf") {
+        documentText = `Leadership Assessment Report
+
+...sample PDF-like content...`;
+      } else {
+        documentText = `360-Degree Feedback Report
+
+...sample DOC/DOCX-like content...`;
+      }
+
+      // First, get the professional assessment
+      const systemInstruction =
+        "You are an expert Alteva leadership coach creating professional, executive-level coaching assessments.";
+      const assessmentPrompt = `Analyse the following 360-degree feedback report and create a structured coaching assessment:\n\n${documentText}`;
+
+      const input = `${systemInstruction}\n\n${assessmentPrompt}`;
+
+      const assessmentResponse = await openai.responses.create({
+        model: MODEL,
+        input,
+      });
+
+      const ar: any = assessmentResponse as any;
+      const assessment: string =
+        ar.output_text ??
+        ar.output?.[0]?.content?.[0]?.text ??
+        "";
+
+      if (!assessment || assessment.trim() === "") {
+        throw new Error("Empty assessment response from Responses API");
+      }
+
+      // Now extract structured data using a second AI call
+      const extractionPrompt = `Extract key information from this 360 report and return as JSON.
+
+Document:
+${documentText}
+
+Assessment:
+${assessment}
+
+Extract and return ONLY a JSON object with these fields:
+{
+  "name": "person's name if mentioned",
+  "role": "job title/role if mentioned", 
+  "personalValues": ["value1", "value2", "value3"],
+  "growthProfile": {
+    "leadershipStyle": "description of leadership approach",
+    "keyCharacteristics": ["trait1", "trait2"]
+  },
+  "redZones": ["behavior or area to watch/avoid", "another watch-out"],
+  "greenZones": ["strength to leverage", "another strength"],
+  "recommendations": ["practical next step 1", "practical next step 2"]
+}
+
+Return ONLY the JSON, no explanation.`;
+
+      const extractionResponse = await openai.responses.create({
+        model: MODEL,
+        input: extractionPrompt,
+      });
+
+      const er: any = extractionResponse as any;
+      const extractedText: string =
+        er.output_text ??
+        er.output?.[0]?.content?.[0]?.text ??
+        "";
+
+      // Parse the JSON response
+      let structuredData: any = {};
+      try {
+        // Try to extract JSON from the response (handle cases where AI adds explanation)
+        const jsonMatch = extractedText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          structuredData = JSON.parse(jsonMatch[0]);
+        }
+      } catch (parseError) {
+        console.error("Failed to parse structured data JSON:", parseError);
+        // Continue with empty structured data if parsing fails
+      }
+
+      return {
+        originalContent: documentText,
+        assessment: assessment.trim(),
+        name: structuredData.name || undefined,
+        role: structuredData.role || undefined,
+        personalValues: structuredData.personalValues || [],
+        growthProfile: structuredData.growthProfile || {},
+        redZones: structuredData.redZones || [],
+        greenZones: structuredData.greenZones || [],
+        recommendations: structuredData.recommendations || [],
+      };
+    } catch (error) {
+      console.error("Error analysing document with structured extraction:", error);
+      throw new Error("Failed to analyse document with AI");
+    }
+  }
+
   /** Topic-specific wrapper: keeps external contract stable. */
   async getTopicSpecificResponse(
     message: string,

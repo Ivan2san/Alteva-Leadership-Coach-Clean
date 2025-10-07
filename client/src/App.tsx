@@ -24,6 +24,7 @@ import PromptLibrary from "@/pages/prompt-library";
 import Settings from "@/pages/settings";
 import WelcomeGuide from "@/pages/welcome-guide";
 import LGP360Report from "@/pages/lgp360-report";
+import Onboarding from "@/pages/onboarding";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard"; // stub exists
 
@@ -50,6 +51,7 @@ function AppRouter() {
       {/* Common pages */}
       <Route path="/login" component={Login} />
       <Route path="/signup" component={Signup} />
+      <Route path="/onboarding" component={Onboarding} />
       <Route path="/knowledge-base" component={KnowledgeBase} />
       <Route path="/conversations" component={Conversations} />
       <Route path="/analytics" component={Analytics} />

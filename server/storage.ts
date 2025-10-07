@@ -211,14 +211,33 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUserLGP360(id: string, lgp360Data: LGP360ReportData): Promise<User | undefined> {
+    const updateData: any = {
+      lgp360OriginalContent: lgp360Data.originalContent || null,
+      lgp360Assessment: lgp360Data.assessment,
+      lgp360UploadedAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    // Add structured insights if provided
+    if (lgp360Data.personalValues !== undefined) {
+      updateData.personalValues = lgp360Data.personalValues;
+    }
+    if (lgp360Data.growthProfile !== undefined) {
+      updateData.growthProfile = lgp360Data.growthProfile;
+    }
+    if (lgp360Data.redZones !== undefined) {
+      updateData.redZones = lgp360Data.redZones;
+    }
+    if (lgp360Data.greenZones !== undefined) {
+      updateData.greenZones = lgp360Data.greenZones;
+    }
+    if (lgp360Data.recommendations !== undefined) {
+      updateData.recommendations = lgp360Data.recommendations;
+    }
+
     const [user] = await db
       .update(users)
-      .set({ 
-        lgp360OriginalContent: lgp360Data.originalContent || null,
-        lgp360Assessment: lgp360Data.assessment,
-        lgp360UploadedAt: new Date(),
-        updatedAt: new Date() 
-      })
+      .set(updateData)
       .where(eq(users.id, id))
       .returning();
     return user;
