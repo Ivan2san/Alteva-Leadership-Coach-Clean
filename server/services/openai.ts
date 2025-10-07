@@ -3,6 +3,13 @@
 // Docs: https://platform.openai.com/docs/api-reference/responses/create
 import OpenAI from "openai";
 import type { LGP360ReportData } from "@shared/schema";
+import mammoth from "mammoth";
+import { parse as csvParse } from "csv-parse/sync";
+import { createRequire } from "module";
+
+// pdf-parse is CommonJS, use createRequire for proper import
+const require = createRequire(import.meta.url);
+const pdfParse = require('pdf-parse');
 
 // Resolve API key from env
 const apiKey = process.env.OPENAI_API_KEY ?? process.env.OPENAI_API_KEY_ENV_VAR;
@@ -311,6 +318,56 @@ Use this profile to tailor questions, reference style and strengths, and target 
     return summary;
   }
 
+  /** Parse document content based on MIME type */
+  private async parseDocumentContent(
+    fileBuffer: Buffer,
+    fileName: string,
+    mimeType: string
+  ): Promise<string> {
+    try {
+      if (mimeType === "text/plain") {
+        return fileBuffer.toString("utf-8");
+      } else if (mimeType === "application/pdf") {
+        const pdfData = await pdfParse(fileBuffer);
+        return pdfData.text;
+      } else if (mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+        const result = await mammoth.extractRawText({ buffer: fileBuffer });
+        return result.value;
+      } else if (mimeType === "text/csv" || fileName.endsWith(".csv")) {
+        const csvText = fileBuffer.toString("utf-8");
+        const records = csvParse(csvText, {
+          columns: true,
+          skip_empty_lines: true,
+          trim: true,
+        });
+        
+        let formattedText = "360-Degree Feedback Report\n\n";
+        
+        if (records.length > 0 && records[0] && typeof records[0] === 'object') {
+          const headers = Object.keys(records[0] as Record<string, unknown>);
+          formattedText += `Found ${records.length} feedback entries.\n\n`;
+          
+          records.forEach((record: any, index: number) => {
+            formattedText += `Entry ${index + 1}:\n`;
+            headers.forEach((header) => {
+              if (record[header]) {
+                formattedText += `${header}: ${record[header]}\n`;
+              }
+            });
+            formattedText += "\n";
+          });
+        }
+        
+        return formattedText;
+      } else {
+        throw new Error(`Unsupported file type: ${mimeType}`);
+      }
+    } catch (error) {
+      console.error("Error parsing document:", error);
+      throw new Error(`Failed to parse document: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
   /** Analyse an uploaded document and return a professional assessment. */
   async analyzeDocumentProfessional(
     fileBuffer: Buffer,
@@ -318,19 +375,8 @@ Use this profile to tailor questions, reference style and strengths, and target 
     mimeType: string
   ): Promise<{ originalContent: string; assessment: string }> {
     try {
-      // Demo extraction: replace with real parsing for pdf/docx
-      let documentText = "";
-      if (mimeType === "text/plain") {
-        documentText = fileBuffer.toString("utf-8");
-      } else if (mimeType === "application/pdf") {
-        documentText = `Leadership Assessment Report
-
-...sample PDF-like content...`;
-      } else {
-        documentText = `360-Degree Feedback Report
-
-...sample DOC/DOCX-like content...`;
-      }
+      // Parse document content using the helper method
+      const documentText = await this.parseDocumentContent(fileBuffer, fileName, mimeType);
 
       const systemInstruction =
         "You are an expert Alteva leadership coach creating professional, executive-level coaching assessments.";
@@ -380,19 +426,8 @@ Use this profile to tailor questions, reference style and strengths, and target 
     recommendations?: string[];
   }> {
     try {
-      // Extract document text
-      let documentText = "";
-      if (mimeType === "text/plain") {
-        documentText = fileBuffer.toString("utf-8");
-      } else if (mimeType === "application/pdf") {
-        documentText = `Leadership Assessment Report
-
-...sample PDF-like content...`;
-      } else {
-        documentText = `360-Degree Feedback Report
-
-...sample DOC/DOCX-like content...`;
-      }
+      // Parse document content using the helper method
+      const documentText = await this.parseDocumentContent(fileBuffer, fileName, mimeType);
 
       // First, get the professional assessment
       const systemInstruction =

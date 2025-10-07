@@ -347,13 +347,13 @@ export default function OnboardingPage() {
               Click to upload or drag and drop
             </p>
             <p className="text-xs text-muted-foreground">
-              PDF, Word, or text files
+              PDF, Word (.docx), CSV, or text files
             </p>
             <input
               ref={fileInputRef}
               type="file"
               className="hidden"
-              accept=".pdf,.doc,.docx,.txt"
+              accept=".pdf,.docx,.txt,.csv"
               onChange={handleFileUpload}
             />
           </div>

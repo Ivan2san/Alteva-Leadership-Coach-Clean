@@ -112,12 +112,12 @@ export default function LGP360ReportPage() {
       return;
     }
 
-    // Check file type
-    const allowedTypes = ['application/pdf', 'text/plain', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-    if (!allowedTypes.includes(file.type)) {
+    // Check file type (note: only .docx is supported, not legacy .doc)
+    const allowedTypes = ['application/pdf', 'text/plain', 'text/csv', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    if (!allowedTypes.includes(file.type) && !file.name.endsWith('.csv')) {
       toast({
         title: "Invalid File Type",
-        description: "Please upload a PDF, Word document, or text file.",
+        description: "Please upload a PDF, Word (.docx), CSV, or text file.",
         variant: "destructive",
       });
       return;

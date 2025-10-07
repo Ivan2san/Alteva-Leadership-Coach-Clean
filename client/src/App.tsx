@@ -28,6 +28,7 @@ import Profile from "@/pages/profile";
 import PreparePage from "@/pages/prepare";
 import RolePlayPage from "@/pages/role-play";
 import PulsePage from "@/pages/pulse";
+import GeneralChat from "@/pages/general-chat";
 
 // Root route: redirects authenticated users to Profile, others to Login
 function Root() {
@@ -70,6 +71,7 @@ function AppRouter() {
       <Route path="/lgp360" component={LGP360Report} />
 
       {/* Chat routes */}
+      <Route path="/chat" component={GeneralChat} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/prompts/:topic" component={PromptSelection} />
       <Route path="/chat/:topic" component={Chat} />

@@ -771,6 +771,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "No document uploaded" });
       }
 
+      // Reject legacy .doc files (only .docx supported)
+      const allowedTypes = [
+        'application/pdf',
+        'text/plain',
+        'text/csv',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      ];
+      if (!allowedTypes.includes(req.file.mimetype) && !req.file.originalname.endsWith('.csv')) {
+        return res.status(400).json({ error: "Unsupported file type. Please upload PDF, Word (.docx), CSV, or text files." });
+      }
+
       const analysisResult = await openaiService.analyzeDocumentProfessional(
         req.file.buffer,
         req.file.originalname,
@@ -789,6 +800,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No document uploaded" });
+      }
+
+      // Reject legacy .doc files (only .docx supported)
+      const allowedTypes = [
+        'application/pdf',
+        'text/plain',
+        'text/csv',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      ];
+      if (!allowedTypes.includes(req.file.mimetype) && !req.file.originalname.endsWith('.csv')) {
+        return res.status(400).json({ error: "Unsupported file type. Please upload PDF, Word (.docx), CSV, or text files." });
       }
 
       const analysisResult = await openaiService.analyzeDocument360Structured(

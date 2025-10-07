@@ -14,7 +14,7 @@ export default function MainNavigation() {
 
   const handleTabChange = (value: string) => {
     if (value === "profile") navigate("/profile");
-    if (value === "chat") navigate("/chat/general");
+    if (value === "chat") navigate("/chat");
     if (value === "conversations") navigate("/conversations");
   };
 
