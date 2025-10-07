@@ -76,3 +76,41 @@ The system integrates with **OpenAI's API** using a sophisticated prompt enginee
 ## Additional Integrations
 - **Replit Platform**: Integrated development environment with specialized plugins for cartographer and runtime error handling
 - **Service Worker**: Custom implementation for PWA functionality and offline support
+
+# Recent Changes
+
+## October 7, 2025 - New 3-Tab Navigation Architecture
+
+### Journey 2 Disabled
+- Updated `.env` file: Changed `VITE_JOURNEY_V2=1` to `VITE_JOURNEY_V2=0`
+- Journey 2 routes are now disabled in App.tsx
+- Application reverts to v1 routes (home, dashboard, chat, etc.)
+- Note: Browser hard refresh (Ctrl+Shift+R / Cmd+Shift+R) may be needed to clear cached bundle
+
+### New Navigation Structure
+Created `client/src/components/MainNavigation.tsx` - A 3-tab navigation component with:
+- **Profile Tab**: Placeholder for future ProfileDashboard page
+- **Chat Tab**: Placeholder for enhanced chat experience
+- **Conversations Tab**: Placeholder for ConversationsHub page
+
+Uses Tabs component from `@/components/ui/tabs` with clean, simple styling at the top.
+
+### Planned Routing Architecture (Not Yet Implemented)
+The new 3-tab navigation will be wired up in future tasks with the following routing plan:
+
+1. **Profile Tab** → New ProfileDashboard page (to be created)
+   - User profile information
+   - Personal dashboard with goals and progress
+   - Leadership development overview
+
+2. **Chat Tab** → Enhanced chat page (existing /chat route to be enhanced)
+   - Improved chat interface
+   - Better integration with leadership topics
+   - Enhanced AI conversation experience
+
+3. **Conversations Tab** → New ConversationsHub page (to be created)
+   - Conversation history
+   - Saved conversations
+   - Quick access to previous chats
+
+**Important**: The MainNavigation component is currently a placeholder. Actual routing integration and page creation will happen in subsequent tasks. All v1 functionality remains intact.
