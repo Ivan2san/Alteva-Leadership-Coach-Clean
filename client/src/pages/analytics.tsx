@@ -321,9 +321,9 @@ export default function AnalyticsPage() {
 
           {/* Success Checkpoints */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Award className="h-5 w-5 text-yellow-500" />
+            <CardHeader className="pb-3">
+              <CardTitle className="text-2xl flex items-center gap-2">
+                <Award className="h-5 w-5" />
                 Success Checkpoints
               </CardTitle>
               <CardDescription>
@@ -331,7 +331,7 @@ export default function AnalyticsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {[
                   { type: 'report_parsed', label: 'Uploaded 360 Report', description: 'Started your leadership journey' },
                   { type: 'first_profile_chat', label: 'First Profile Chat', description: 'Explored your leadership profile' },
@@ -345,24 +345,24 @@ export default function AnalyticsPage() {
                       key={milestone.type} 
                       className={`flex items-start gap-4 p-4 rounded-lg border ${
                         achieved 
-                          ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
-                          : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700'
+                          ? 'bg-muted border-muted-foreground/20' 
+                          : 'bg-background border-border'
                       }`}
                     >
                       {achieved ? (
-                        <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+                        <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                       ) : (
-                        <Circle className="h-6 w-6 text-gray-400 flex-shrink-0 mt-0.5" />
+                        <Circle className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
                       )}
                       <div className="flex-1 min-w-0">
-                        <h4 className={`font-medium ${achieved ? 'text-green-900 dark:text-green-100' : 'text-gray-700 dark:text-gray-300'}`}>
+                        <h4 className="font-medium">
                           {milestone.label}
                         </h4>
-                        <p className={`text-sm ${achieved ? 'text-green-700 dark:text-green-300' : 'text-gray-500 dark:text-gray-400'}`}>
+                        <p className="text-sm text-muted-foreground">
                           {milestone.description}
                         </p>
                         {achieved && (
-                          <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                          <p className="text-xs text-muted-foreground mt-1">
                             Achieved {format(new Date(achieved.achievedAt), 'MMM d, yyyy')}
                           </p>
                         )}

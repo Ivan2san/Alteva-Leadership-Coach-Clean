@@ -67,14 +67,14 @@ export default function RolePlayHistoryPage() {
           </div>
 
           {isLoading ? (
-            <div className="text-center py-8">
-              <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-              <p>Loading sessions...</p>
+            <div className="text-center py-12">
+              <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading sessions...</p>
             </div>
           ) : sessions.length === 0 ? (
             <Card>
               <CardContent className="text-center py-12">
-                <Users className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+                <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                 <h3 className="text-lg font-medium mb-2">No practice sessions yet</h3>
                 <p className="text-muted-foreground mb-4">Start your first role play to see it here</p>
                 <Button onClick={() => navigate("/conversations/role-play")}>
@@ -83,43 +83,42 @@ export default function RolePlayHistoryPage() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-4">
+            <div className="grid gap-4 md:grid-cols-2">
               {sessions.map((session: RolePlaySession) => (
                 <Card key={session.id} className="hover:shadow-md transition-shadow">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-lg mb-2">{session.scenario}</CardTitle>
-                        <CardDescription>
-                          <div className="flex items-center gap-4 mt-2">
-                            <div className="flex items-center gap-2">
-                              <Users className="h-4 w-4" />
-                              <span>Played: {session.persona}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <MessageSquare className="h-4 w-4" />
-                              <span>{session.transcript.length} messages</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Calendar className="h-4 w-4" />
-                              <span>{format(new Date(session.createdAt), 'MMM d, yyyy')}</span>
-                            </div>
-                          </div>
-                        </CardDescription>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={session.status === 'completed' ? 'default' : 'secondary'}>
+                  <CardHeader className="pb-3">
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <CardTitle className="text-lg line-clamp-2">{session.scenario}</CardTitle>
+                        <Badge variant={session.status === 'completed' ? 'default' : 'secondary'} className="flex-shrink-0">
                           {session.status === 'completed' ? 'Completed' : 'In Progress'}
                         </Badge>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setSelectedSession(session)}
-                        >
-                          <Eye className="h-4 w-4 mr-2" />
-                          View Details
-                        </Button>
                       </div>
+                      <CardDescription className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4" />
+                          <span className="line-clamp-1">{session.persona}</span>
+                        </div>
+                        <div className="flex items-center gap-4 text-xs">
+                          <div className="flex items-center gap-1">
+                            <MessageSquare className="h-3 w-3" />
+                            <span>{session.transcript.length} messages</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            <span>{format(new Date(session.createdAt), 'MMM d, yyyy')}</span>
+                          </div>
+                        </div>
+                      </CardDescription>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedSession(session)}
+                        className="w-full"
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        View Details
+                      </Button>
                     </div>
                   </CardHeader>
                 </Card>
@@ -143,17 +142,17 @@ export default function RolePlayHistoryPage() {
             {/* Transcript */}
             <div>
               <h3 className="font-semibold mb-3 flex items-center gap-2">
-                <MessageSquare className="h-4 w-4" />
+                <MessageSquare className="h-5 w-5" />
                 Transcript
               </h3>
-              <div className="space-y-3 max-h-64 overflow-y-auto">
+              <div className="space-y-2 max-h-64 overflow-y-auto border rounded-lg p-4">
                 {selectedSession?.transcript.map((msg, index) => (
                   <div
                     key={index}
                     className={`p-3 rounded-lg ${
                       msg.speaker === 'user'
-                        ? 'bg-blue-50 dark:bg-blue-950/20 ml-8'
-                        : 'bg-gray-50 dark:bg-gray-800/50 mr-8'
+                        ? 'bg-muted ml-8'
+                        : 'bg-background border mr-8'
                     }`}
                   >
                     <div className="flex items-center gap-2 mb-1">
@@ -174,16 +173,16 @@ export default function RolePlayHistoryPage() {
             {selectedSession?.feedback && (
               <div className="space-y-4">
                 <h3 className="font-semibold mb-3 flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4" />
+                  <TrendingUp className="h-5 w-5" />
                   Feedback
                 </h3>
 
                 {selectedSession.feedback.strengths.length > 0 && (
-                  <div className="p-4 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
-                    <h4 className="font-medium text-green-700 dark:text-green-400 mb-2">What Worked</h4>
+                  <div className="p-4 rounded-lg bg-muted border">
+                    <h4 className="font-medium mb-2">What Worked</h4>
                     <ul className="space-y-1">
                       {selectedSession.feedback.strengths.map((strength, index) => (
-                        <li key={index} className="text-sm text-green-700 dark:text-green-300">
+                        <li key={index} className="text-sm text-muted-foreground">
                           • {strength}
                         </li>
                       ))}
@@ -192,11 +191,11 @@ export default function RolePlayHistoryPage() {
                 )}
 
                 {selectedSession.feedback.improvements.length > 0 && (
-                  <div className="p-4 rounded-lg bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800">
-                    <h4 className="font-medium text-orange-700 dark:text-orange-400 mb-2">Room to Grow</h4>
+                  <div className="p-4 rounded-lg bg-muted border">
+                    <h4 className="font-medium mb-2">Room to Grow</h4>
                     <ul className="space-y-1">
                       {selectedSession.feedback.improvements.map((improvement, index) => (
-                        <li key={index} className="text-sm text-orange-700 dark:text-orange-300">
+                        <li key={index} className="text-sm text-muted-foreground">
                           • {improvement}
                         </li>
                       ))}
@@ -205,11 +204,11 @@ export default function RolePlayHistoryPage() {
                 )}
 
                 {selectedSession.feedback.suggestedLines.length > 0 && (
-                  <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
-                    <h4 className="font-medium text-blue-700 dark:text-blue-400 mb-2">Suggested Lines</h4>
+                  <div className="p-4 rounded-lg bg-muted border">
+                    <h4 className="font-medium mb-2">Suggested Lines</h4>
                     <div className="space-y-2">
                       {selectedSession.feedback.suggestedLines.map((line, index) => (
-                        <p key={index} className="text-sm text-blue-700 dark:text-blue-300 italic">
+                        <p key={index} className="text-sm text-muted-foreground italic">
                           "{line}"
                         </p>
                       ))}

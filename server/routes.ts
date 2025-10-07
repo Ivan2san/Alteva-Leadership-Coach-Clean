@@ -1116,6 +1116,37 @@ Respond ONLY with your response, nothing else.`;
     }
   });
 
+  app.get("/api/role-play/sessions", authenticateUser, async (req, res) => {
+    try {
+      const sessions = await storage.getRolePlaySessions(req.user!.id);
+      res.json(sessions);
+    } catch (error) {
+      console.error("Get role play sessions error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.patch("/api/role-play/:id", authenticateUser, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const session = await storage.getRolePlaySession(id);
+
+      if (!session) {
+        return res.status(404).json({ error: "Session not found" });
+      }
+
+      if (session.userId !== req.user!.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const updated = await storage.updateRolePlaySession(id, req.body);
+      res.json(updated);
+    } catch (error) {
+      console.error("Update role play session error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   // Pulse Survey API
   app.post("/api/pulse-surveys", authenticateUser, async (req, res) => {
     try {

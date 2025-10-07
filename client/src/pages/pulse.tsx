@@ -165,42 +165,42 @@ export default function PulsePage() {
               <Card>
                 <CardHeader className="pb-3">
                   <CardDescription>Check-ins</CardDescription>
-                  <CardTitle className="text-3xl">{pulseHistory.length}</CardTitle>
+                  <CardTitle className="text-2xl">{pulseHistory.length}</CardTitle>
                 </CardHeader>
               </Card>
               <Card>
                 <CardHeader className="pb-3">
                   <CardDescription>Average Mood</CardDescription>
-                  <CardTitle className="text-3xl flex items-center gap-2">
+                  <CardTitle className="text-2xl flex items-center gap-2">
                     {avgMood.toFixed(1)}
-                    <Star className="h-5 w-5 text-yellow-500" fill="currentColor" />
+                    <Star className="h-5 w-5" fill="currentColor" />
                   </CardTitle>
                 </CardHeader>
               </Card>
               <Card>
                 <CardHeader className="pb-3">
                   <CardDescription>Average Energy</CardDescription>
-                  <CardTitle className="text-3xl flex items-center gap-2">
+                  <CardTitle className="text-2xl flex items-center gap-2">
                     {avgEnergy.toFixed(1)}
-                    <Activity className="h-5 w-5 text-blue-500" />
+                    <Activity className="h-5 w-5" />
                   </CardTitle>
                 </CardHeader>
               </Card>
               <Card>
                 <CardHeader className="pb-3">
                   <CardDescription>Mood Trend</CardDescription>
-                  <CardTitle className="text-3xl flex items-center gap-2">
+                  <CardTitle className="text-2xl flex items-center gap-2">
                     {moodTrend === null ? (
                       <span className="text-muted-foreground text-lg">-</span>
                     ) : moodTrend > 0 ? (
                       <>
-                        <TrendingUp className="h-8 w-8 text-green-500" />
-                        <span className="text-lg text-green-500">+{moodTrend.toFixed(1)}</span>
+                        <TrendingUp className="h-5 w-5" />
+                        <span className="text-lg">+{moodTrend.toFixed(1)}</span>
                       </>
                     ) : moodTrend < 0 ? (
                       <>
-                        <TrendingDown className="h-8 w-8 text-red-500" />
-                        <span className="text-lg text-red-500">{moodTrend.toFixed(1)}</span>
+                        <TrendingDown className="h-5 w-5" />
+                        <span className="text-lg">{moodTrend.toFixed(1)}</span>
                       </>
                     ) : (
                       <span className="text-muted-foreground text-lg">→</span>
@@ -214,14 +214,14 @@ export default function PulsePage() {
           {/* Trend Chart */}
           {chartData.length >= 2 && (
             <Card>
-              <CardHeader>
-                <CardTitle>Pulse Trends (Last 14 Days)</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-2xl">Pulse Trends (Last 14 Days)</CardTitle>
                 <CardDescription>Track your mood and energy over time</CardDescription>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" />
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                     <XAxis dataKey="date" />
                     <YAxis domain={[0, 5]} ticks={[1, 2, 3, 4, 5]} />
                     <Tooltip />
@@ -229,18 +229,18 @@ export default function PulsePage() {
                     <Line 
                       type="monotone" 
                       dataKey="mood" 
-                      stroke="#10b981" 
+                      stroke="hsl(var(--primary))" 
                       strokeWidth={2}
                       name="Mood"
-                      dot={{ fill: '#10b981' }}
+                      dot={{ fill: 'hsl(var(--primary))' }}
                     />
                     <Line 
                       type="monotone" 
                       dataKey="energy" 
-                      stroke="#3b82f6" 
+                      stroke="hsl(var(--muted-foreground))" 
                       strokeWidth={2}
                       name="Energy"
-                      dot={{ fill: '#3b82f6' }}
+                      dot={{ fill: 'hsl(var(--muted-foreground))' }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -363,10 +363,10 @@ export default function PulsePage() {
             {/* Organization Pulse Tab */}
             <TabsContent value="organization" className="space-y-6 mt-6">
               <Card>
-                <CardHeader>
+                <CardHeader className="pb-3">
                   <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-xl bg-blue-100 dark:bg-blue-900/40">
-                      <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                    <div className="p-3 rounded-xl bg-muted">
+                      <Users className="h-5 w-5" />
                     </div>
                     <div>
                       <CardTitle className="text-2xl">Organization Pulse</CardTitle>
@@ -377,10 +377,10 @@ export default function PulsePage() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="bg-muted/50 rounded-lg p-8 text-center">
-                    <BarChart3 className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+                  <div className="border rounded-lg p-8 text-center">
+                    <BarChart3 className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                     <h3 className="text-lg font-semibold mb-2">Integration Coming Soon</h3>
-                    <p className="text-muted-foreground mb-4 max-w-md mx-auto">
+                    <p className="text-sm text-muted-foreground mb-4 max-w-md mx-auto">
                       Connect your organization's pulse survey platform to see team trends and compare your pulse with organizational data.
                     </p>
                     <Button variant="outline" disabled>
@@ -389,10 +389,10 @@ export default function PulsePage() {
                   </div>
 
                   <div className="space-y-3">
-                    <h4 className="font-semibold">Supported Platforms (Coming Soon):</h4>
-                    <div className="grid grid-cols-2 gap-2">
+                    <h4 className="font-medium">Supported Platforms (Coming Soon):</h4>
+                    <div className="grid grid-cols-2 gap-3">
                       {['Culture Amp', 'Officevibe', 'TINYpulse', 'Custom API'].map((platform) => (
-                        <div key={platform} className="p-3 border rounded-lg text-sm text-center text-muted-foreground">
+                        <div key={platform} className="p-3 border rounded-lg text-sm text-center bg-muted/50">
                           {platform}
                         </div>
                       ))}
