@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import Shell from "@/journey2/components/Shell";
 
 /** ---- Types ---- */
 type NextAction = { 
@@ -149,81 +150,83 @@ export default function Overview() {
     .slice(0, 3);
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="Welcome back">
-        <Link href="/journey/check-ins" className="px-3 py-1 border rounded">Today's Check-in</Link>
-        <Link href="/journey/goals" className="px-3 py-1 border rounded">Add Goal</Link>
-      </PageHeader>
+    <Shell>
+      <div className="space-y-6">
+        <PageHeader title="Welcome back">
+          <Link href="/check-ins" className="px-3 py-1 border rounded">Today's Check-in</Link>
+          <Link href="/goals" className="px-3 py-1 border rounded">Add Goal</Link>
+        </PageHeader>
 
-      {isLoading ? (
-        <Loader />
-      ) : isError ? (
-        <ErrorNotice message={(error as Error)?.message ?? "Something went wrong"} />
-      ) : (
-        <>
-          {/* Stat cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-            <StatCard 
-              label="Streak" 
-              value={`${streakData?.streak || 0} days`} 
-              hint="consecutive check-ins" 
-            />
-            <StatCard 
-              label="Progress" 
-              value={`${Math.round(goalStats?.avgProgress || 0)}%`} 
-              hint="overall goal progress" 
-            />
-            <StatCard 
-              label="Goals" 
-              value={`${goalStats?.active || 0} active`} 
-            />
-            <StatCard 
-              label="Mood (7d avg)" 
-              value={`${avgMood(recentCheckIns).toFixed(1)}/10`} 
-            />
-          </div>
-
-          {/* Next actions */}
-          <section className="space-y-2">
-            <h2 className="text-lg font-medium">Next actions</h2>
-            {filteredNextActions.length === 0 ? (
-              <EmptyState
-                title="No suggestions yet"
-                message="Once you add goals and check in a few days, we'll recommend the next 1–3 steps."
-                action={<Link href="/journey/goals" className="px-3 py-1 border rounded">Create your first goal</Link>}
+        {isLoading ? (
+          <Loader />
+        ) : isError ? (
+          <ErrorNotice message={(error as Error)?.message ?? "Something went wrong"} />
+        ) : (
+          <>
+            {/* Stat cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+              <StatCard 
+                label="Streak" 
+                value={`${streakData?.streak || 0} days`} 
+                hint="consecutive check-ins" 
               />
-            ) : (
-              <ul className="list-disc pl-5 space-y-1">
-                {filteredNextActions.map(a => (
-                  <li key={a.id} className="text-sm">{a.text}</li>
-                ))}
-              </ul>
-            )}
-          </section>
-
-          {/* Recent check-ins */}
-          <section className="space-y-2">
-            <h2 className="text-lg font-medium">Recent check-ins</h2>
-            {recentCheckIns.length === 0 ? (
-              <EmptyState
-                title="Nothing here yet"
-                message="Log your first daily check-in to start your streak."
-                action={<Link href="/journey/check-ins" className="px-3 py-1 border rounded">Today's Check-in</Link>}
+              <StatCard 
+                label="Progress" 
+                value={`${Math.round(goalStats?.avgProgress || 0)}%`} 
+                hint="overall goal progress" 
               />
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {recentCheckIns.slice(0, 3).map(ci => (
-                  <div key={ci.id} className="border rounded-lg p-3">
-                    <div className="text-xs text-gray-500">{ci.date}</div>
-                    <div className="text-lg font-semibold mt-1">Mood: {ci.mood}/10</div>
-                    {ci.note ? <div className="text-sm text-gray-700 mt-1">{ci.note}</div> : null}
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-        </>
-      )}
-    </div>
+              <StatCard 
+                label="Goals" 
+                value={`${goalStats?.active || 0} active`} 
+              />
+              <StatCard 
+                label="Mood (7d avg)" 
+                value={`${avgMood(recentCheckIns).toFixed(1)}/10`} 
+              />
+            </div>
+
+            {/* Next actions */}
+            <section className="space-y-2">
+              <h2 className="text-lg font-medium">Next actions</h2>
+              {filteredNextActions.length === 0 ? (
+                <EmptyState
+                  title="No suggestions yet"
+                  message="Once you add goals and check in a few days, we'll recommend the next 1–3 steps."
+                  action={<Link href="/goals" className="px-3 py-1 border rounded">Create your first goal</Link>}
+                />
+              ) : (
+                <ul className="list-disc pl-5 space-y-1">
+                  {filteredNextActions.map(a => (
+                    <li key={a.id} className="text-sm">{a.text}</li>
+                  ))}
+                </ul>
+              )}
+            </section>
+
+            {/* Recent check-ins */}
+            <section className="space-y-2">
+              <h2 className="text-lg font-medium">Recent check-ins</h2>
+              {recentCheckIns.length === 0 ? (
+                <EmptyState
+                  title="Nothing here yet"
+                  message="Log your first daily check-in to start your streak."
+                  action={<Link href="/check-ins" className="px-3 py-1 border rounded">Today's Check-in</Link>}
+                />
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {recentCheckIns.slice(0, 3).map(ci => (
+                    <div key={ci.id} className="border rounded-lg p-3">
+                      <div className="text-xs text-gray-500">{ci.date}</div>
+                      <div className="text-lg font-semibold mt-1">Mood: {ci.mood}/10</div>
+                      {ci.note ? <div className="text-sm text-gray-700 mt-1">{ci.note}</div> : null}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          </>
+        )}
+      </div>
+    </Shell>
   );
 }
