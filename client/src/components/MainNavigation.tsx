@@ -7,14 +7,14 @@ export default function MainNavigation() {
   
   const getActiveTab = () => {
     if (location === "/profile") return "profile";
-    if (location === "/chat") return "chat";
+    if (location.startsWith("/chat")) return "chat";
     if (location === "/conversations") return "conversations";
     return "profile";
   };
 
   const handleTabChange = (value: string) => {
     if (value === "profile") navigate("/profile");
-    if (value === "chat") navigate("/chat");
+    if (value === "chat") navigate("/chat/general");
     if (value === "conversations") navigate("/conversations");
   };
 
