@@ -9,8 +9,12 @@ import {
   BarChart3,
   Calendar,
   Users,
-  Clock
+  Clock,
+  Award,
+  CheckCircle2,
+  Circle
 } from "lucide-react";
+import { format } from "date-fns";
 import { topicConfigurations } from "@/lib/topic-configurations";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { BackButton } from "@/components/back-button";
@@ -41,7 +45,19 @@ export default function AnalyticsPage() {
     queryKey: ["/api/analytics/topic-engagement"],
   });
 
-  const isLoading = statsLoading || engagementLoading;
+  // Fetch checkpoints
+  const { data: checkpoints = [], isLoading: checkpointsLoading } = useQuery({
+    queryKey: ["/api/checkpoints"],
+    queryFn: async () => {
+      const res = await fetch("/api/checkpoints", {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to fetch checkpoints");
+      return res.json();
+    },
+  });
+
+  const isLoading = statsLoading || engagementLoading || checkpointsLoading;
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
@@ -299,6 +315,61 @@ export default function AnalyticsPage() {
                     </div>
                   </>
                 )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Success Checkpoints */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Award className="h-5 w-5 text-yellow-500" />
+                Success Checkpoints
+              </CardTitle>
+              <CardDescription>
+                Track your leadership development milestones
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {[
+                  { type: 'report_parsed', label: 'Uploaded 360 Report', description: 'Started your leadership journey' },
+                  { type: 'first_profile_chat', label: 'First Profile Chat', description: 'Explored your leadership profile' },
+                  { type: 'first_brief', label: 'Created First Brief', description: 'Prepared for a key conversation' },
+                  { type: 'first_roleplay', label: 'Completed First Role Play', description: 'Practiced a difficult conversation' },
+                  { type: 'first_pulse', label: 'Logged First Pulse', description: 'Started tracking your progress' },
+                ].map((milestone) => {
+                  const achieved = checkpoints.find((cp: any) => cp.type === milestone.type);
+                  return (
+                    <div 
+                      key={milestone.type} 
+                      className={`flex items-start gap-4 p-4 rounded-lg border ${
+                        achieved 
+                          ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
+                          : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700'
+                      }`}
+                    >
+                      {achieved ? (
+                        <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+                      ) : (
+                        <Circle className="h-6 w-6 text-gray-400 flex-shrink-0 mt-0.5" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <h4 className={`font-medium ${achieved ? 'text-green-900 dark:text-green-100' : 'text-gray-700 dark:text-gray-300'}`}>
+                          {milestone.label}
+                        </h4>
+                        <p className={`text-sm ${achieved ? 'text-green-700 dark:text-green-300' : 'text-gray-500 dark:text-gray-400'}`}>
+                          {milestone.description}
+                        </p>
+                        {achieved && (
+                          <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                            Achieved {format(new Date(achieved.achievedAt), 'MMM d, yyyy')}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>

@@ -27,6 +27,7 @@ import Dashboard from "@/pages/dashboard"; // stub exists
 import Profile from "@/pages/profile";
 import PreparePage from "@/pages/prepare";
 import RolePlayPage from "@/pages/role-play";
+import RolePlayHistoryPage from "@/pages/role-play-history";
 import PulsePage from "@/pages/pulse";
 import GeneralChat from "@/pages/general-chat";
 
@@ -63,6 +64,7 @@ function AppRouter() {
       <Route path="/conversations" component={Conversations} />
       <Route path="/conversations/prepare" component={PreparePage} />
       <Route path="/conversations/role-play" component={RolePlayPage} />
+      <Route path="/conversations/role-play/history" component={RolePlayHistoryPage} />
       <Route path="/conversations/pulse" component={PulsePage} />
       <Route path="/analytics" component={Analytics} />
       <Route path="/prompt-library" component={PromptLibrary} />

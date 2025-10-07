@@ -6,12 +6,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { BackButton } from "@/components/back-button";
 import { Breadcrumb } from "@/components/breadcrumb";
-import { Activity, TrendingUp, Star, Loader2 } from "lucide-react";
+import { Activity, TrendingUp, Star, Loader2, Users, BarChart3, TrendingDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/header";
 import MainNavigation from "@/components/MainNavigation";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const MOOD_OPTIONS = [
   { value: 1, label: "Struggling", color: "bg-red-500" },
@@ -101,6 +103,29 @@ export default function PulsePage() {
     ? pulseHistory.reduce((sum: number, p: any) => sum + (p.responses?.mood || 0), 0) / pulseHistory.length
     : 0;
 
+  // Calculate average energy from history
+  const avgEnergy = pulseHistory.length > 0
+    ? pulseHistory.reduce((sum: number, p: any) => sum + (p.responses?.energy || 0), 0) / pulseHistory.length
+    : 0;
+
+  // Prepare chart data (reverse to show chronologically)
+  const chartData = [...pulseHistory].reverse().slice(-14).map((pulse: any) => ({
+    date: format(new Date(pulse.date), "MMM d"),
+    mood: pulse.responses?.mood || 0,
+    energy: pulse.responses?.energy || 0,
+  }));
+
+  // Calculate trend (comparing last 3 vs previous 3)
+  const getTrend = (type: 'mood' | 'energy') => {
+    if (pulseHistory.length < 6) return null;
+    const recent = pulseHistory.slice(0, 3).reduce((sum: number, p: any) => sum + (p.responses?.[type] || 0), 0) / 3;
+    const previous = pulseHistory.slice(3, 6).reduce((sum: number, p: any) => sum + (p.responses?.[type] || 0), 0) / 3;
+    return recent - previous;
+  };
+
+  const moodTrend = getTrend('mood');
+  const energyTrend = getTrend('energy');
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -119,9 +144,24 @@ export default function PulsePage() {
             <p className="text-muted-foreground">Check in with yourself</p>
           </div>
 
+          {/* Tabs for Personal vs Organization */}
+          <Tabs defaultValue="personal" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="personal" className="flex items-center gap-2">
+                <Activity className="h-4 w-4" />
+                Personal Pulse
+              </TabsTrigger>
+              <TabsTrigger value="organization" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Organization Pulse
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="personal" className="space-y-6 mt-6">
+
           {/* Quick Stats */}
           {pulseHistory.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Card>
                 <CardHeader className="pb-3">
                   <CardDescription>Check-ins</CardDescription>
@@ -139,13 +179,73 @@ export default function PulsePage() {
               </Card>
               <Card>
                 <CardHeader className="pb-3">
-                  <CardDescription>Trend</CardDescription>
-                  <CardTitle className="text-3xl">
-                    <TrendingUp className="h-8 w-8 text-green-500" />
+                  <CardDescription>Average Energy</CardDescription>
+                  <CardTitle className="text-3xl flex items-center gap-2">
+                    {avgEnergy.toFixed(1)}
+                    <Activity className="h-5 w-5 text-blue-500" />
+                  </CardTitle>
+                </CardHeader>
+              </Card>
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardDescription>Mood Trend</CardDescription>
+                  <CardTitle className="text-3xl flex items-center gap-2">
+                    {moodTrend === null ? (
+                      <span className="text-muted-foreground text-lg">-</span>
+                    ) : moodTrend > 0 ? (
+                      <>
+                        <TrendingUp className="h-8 w-8 text-green-500" />
+                        <span className="text-lg text-green-500">+{moodTrend.toFixed(1)}</span>
+                      </>
+                    ) : moodTrend < 0 ? (
+                      <>
+                        <TrendingDown className="h-8 w-8 text-red-500" />
+                        <span className="text-lg text-red-500">{moodTrend.toFixed(1)}</span>
+                      </>
+                    ) : (
+                      <span className="text-muted-foreground text-lg">→</span>
+                    )}
                   </CardTitle>
                 </CardHeader>
               </Card>
             </div>
+          )}
+
+          {/* Trend Chart */}
+          {chartData.length >= 2 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Pulse Trends (Last 14 Days)</CardTitle>
+                <CardDescription>Track your mood and energy over time</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis domain={[0, 5]} ticks={[1, 2, 3, 4, 5]} />
+                    <Tooltip />
+                    <Legend />
+                    <Line 
+                      type="monotone" 
+                      dataKey="mood" 
+                      stroke="#10b981" 
+                      strokeWidth={2}
+                      name="Mood"
+                      dot={{ fill: '#10b981' }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="energy" 
+                      stroke="#3b82f6" 
+                      strokeWidth={2}
+                      name="Energy"
+                      dot={{ fill: '#3b82f6' }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
           )}
 
           {/* Log Pulse */}
@@ -258,6 +358,50 @@ export default function PulsePage() {
               </CardContent>
             </Card>
           )}
+            </TabsContent>
+
+            {/* Organization Pulse Tab */}
+            <TabsContent value="organization" className="space-y-6 mt-6">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-xl bg-blue-100 dark:bg-blue-900/40">
+                      <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-2xl">Organization Pulse</CardTitle>
+                      <CardDescription className="mt-1">
+                        Connect your organization's pulse data for team insights
+                      </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="bg-muted/50 rounded-lg p-8 text-center">
+                    <BarChart3 className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+                    <h3 className="text-lg font-semibold mb-2">Integration Coming Soon</h3>
+                    <p className="text-muted-foreground mb-4 max-w-md mx-auto">
+                      Connect your organization's pulse survey platform to see team trends and compare your pulse with organizational data.
+                    </p>
+                    <Button variant="outline" disabled>
+                      Connect Integration
+                    </Button>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h4 className="font-semibold">Supported Platforms (Coming Soon):</h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      {['Culture Amp', 'Officevibe', 'TINYpulse', 'Custom API'].map((platform) => (
+                        <div key={platform} className="p-3 border rounded-lg text-sm text-center text-muted-foreground">
+                          {platform}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </div>

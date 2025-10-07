@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { BackButton } from "@/components/back-button";
 import { Breadcrumb } from "@/components/breadcrumb";
-import { Users, Send, Loader2, TrendingUp, TrendingDown, Lightbulb } from "lucide-react";
+import { Users, Send, Loader2, TrendingUp, TrendingDown, Lightbulb, Save, Check, History } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/header";
 import MainNavigation from "@/components/MainNavigation";
@@ -43,6 +43,57 @@ export default function RolePlayPage() {
   
   // Feedback state
   const [feedback, setFeedback] = useState<Feedback | null>(null);
+  
+  // Auto-save state
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Auto-save function
+  const autoSaveSession = async () => {
+    if (!sessionId || transcript.length === 0 || step !== "practice") return;
+
+    setIsSaving(true);
+    try {
+      await fetch(`/api/role-play/${sessionId}`, {
+        method: "PATCH",
+        headers: { 
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ 
+          transcript: transcript 
+        }),
+      });
+      setLastSaved(new Date());
+    } catch (error) {
+      console.error("Auto-save failed:", error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Auto-save effect - triggers 3 seconds after transcript changes
+  useEffect(() => {
+    if (step !== "practice" || !sessionId) return;
+
+    // Clear existing timer
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+
+    // Set new timer for auto-save
+    autoSaveTimerRef.current = setTimeout(() => {
+      autoSaveSession();
+    }, 3000);
+
+    // Cleanup on unmount
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, [transcript, step, sessionId]);
 
   const handleStartSession = async () => {
     if (!scenario.trim() || !persona.trim()) {
@@ -293,8 +344,22 @@ export default function RolePlayPage() {
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Live Practice</CardTitle>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3">
+                      <CardTitle>Live Practice</CardTitle>
+                      {/* Auto-save indicator */}
+                      {isSaving ? (
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Save className="h-3 w-3 animate-pulse" />
+                          <span>Saving...</span>
+                        </div>
+                      ) : lastSaved ? (
+                        <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-400">
+                          <Check className="h-3 w-3" />
+                          <span>Saved</span>
+                        </div>
+                      ) : null}
+                    </div>
                     <CardDescription className="mt-1">Playing: {persona}</CardDescription>
                   </div>
                   <Button 
@@ -424,20 +489,31 @@ export default function RolePlayPage() {
                 />
               </div>
 
-              <Button 
-                onClick={handleStartSession} 
-                disabled={isLoading}
-                className="w-full bg-purple-600 hover:bg-purple-700"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              <div className="space-y-3">
+                <Button 
+                  onClick={handleStartSession} 
+                  disabled={isLoading}
+                  className="w-full bg-purple-600 hover:bg-purple-700"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     Starting...
                   </>
                 ) : (
                   "Start Practice"
                 )}
-              </Button>
+                </Button>
+                
+                <Button 
+                  variant="outline"
+                  onClick={() => navigate("/conversations/role-play/history")}
+                  className="w-full"
+                >
+                  <History className="h-4 w-4 mr-2" />
+                  View Past Sessions
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>
