@@ -866,6 +866,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/profile/obp", authenticateUser, async (req, res) => {
+    try {
+      const { obpData } = req.body;
+      const updatedUser = await storage.updateUser(req.user!.id, { obpData });
+      if (!updatedUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.json({ success: true, user: updatedUser });
+    } catch (error) {
+      console.error("Update OBP error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/profile/immunity-to-change", authenticateUser, async (req, res) => {
+    try {
+      const { immunityToChangeData } = req.body;
+      const updatedUser = await storage.updateUser(req.user!.id, { immunityToChangeData });
+      if (!updatedUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.json({ success: true, user: updatedUser });
+    } catch (error) {
+      console.error("Update Immunity to Change error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   // Success Checkpoints API
   app.post("/api/checkpoints", authenticateUser, async (req, res) => {
     try {
