@@ -26,6 +26,8 @@ import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard"; // stub exists
 import Profile from "@/pages/profile";
 import PreparePage from "@/pages/prepare";
+import RolePlayPage from "@/pages/role-play";
+import PulsePage from "@/pages/pulse";
 
 // Root route: redirects authenticated users to Profile, others to Login
 function Root() {
@@ -59,6 +61,8 @@ function AppRouter() {
       <Route path="/knowledge-base" component={KnowledgeBase} />
       <Route path="/conversations" component={Conversations} />
       <Route path="/conversations/prepare" component={PreparePage} />
+      <Route path="/conversations/role-play" component={RolePlayPage} />
+      <Route path="/conversations/pulse" component={PulsePage} />
       <Route path="/analytics" component={Analytics} />
       <Route path="/prompt-library" component={PromptLibrary} />
       <Route path="/settings" component={Settings} />

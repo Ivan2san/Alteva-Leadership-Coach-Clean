@@ -997,6 +997,196 @@ Return ONLY a JSON object (no other text) with:
     }
   });
 
+  // Role Play API
+  app.post("/api/role-play", authenticateUser, async (req, res) => {
+    try {
+      const { scenario, persona } = req.body;
+
+      // Generate AI's opening line
+      const openingPrompt = `You are role-playing as: ${persona}
+
+The scenario is: ${scenario}
+
+You are a difficult stakeholder in this conversation. Be realistic and challenging, but not rude. Start the conversation by greeting the user and asking them what they want to discuss. Keep it brief (1-2 sentences).
+
+Respond ONLY with your opening line, nothing else.`;
+
+      const aiResponse = await openaiService.getLeadershipResponse(openingPrompt, "role_play", []);
+
+      const session = await storage.createRolePlaySession({
+        userId: req.user!.id,
+        scenario,
+        persona,
+        transcript: [{
+          speaker: "ai",
+          message: aiResponse.message,
+          timestamp: new Date().toISOString(),
+        }],
+      });
+
+      res.json({
+        id: session.id,
+        aiOpening: aiResponse.message,
+      });
+    } catch (error) {
+      console.error("Create role play session error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/role-play/:id/message", authenticateUser, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { message } = req.body;
+
+      const session = await storage.getRolePlaySession(id);
+
+      if (!session) {
+        return res.status(404).json({ error: "Session not found" });
+      }
+
+      if (session.userId !== req.user!.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      // Build conversation history
+      const conversationHistory = (session.transcript as any[]).map((msg: any) => ({
+        sender: (msg.speaker === "user" ? "user" : "assistant") as "user" | "assistant",
+        text: msg.message,
+      }));
+
+      // Generate AI response
+      const prompt = `You are role-playing as: ${session.persona}
+
+The scenario is: ${session.scenario}
+
+You are a difficult stakeholder in this conversation. Be realistic and challenging, but not rude. The user just said: "${message}"
+
+Respond naturally as this persona would. Keep your response brief (2-3 sentences max).
+
+Respond ONLY with your response, nothing else.`;
+
+      const aiResponse = await openaiService.getLeadershipResponse(prompt, "role_play", conversationHistory);
+
+      // Update transcript
+      const updatedTranscript = [
+        ...(session.transcript as any[]),
+        {
+          speaker: "user",
+          message,
+          timestamp: new Date().toISOString(),
+        },
+        {
+          speaker: "ai",
+          message: aiResponse.message,
+          timestamp: new Date().toISOString(),
+        },
+      ];
+
+      await storage.updateRolePlaySession(id, {
+        transcript: updatedTranscript,
+      });
+
+      res.json({ aiResponse: aiResponse.message });
+    } catch (error) {
+      console.error("Role play message error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Pulse Survey API
+  app.post("/api/pulse-surveys", authenticateUser, async (req, res) => {
+    try {
+      const { responses, notes } = req.body;
+
+      const survey = await storage.createPulseSurvey({
+        userId: req.user!.id,
+        responses,
+        notes: notes || null,
+      });
+
+      // Track checkpoint
+      await storage.createCheckpoint({
+        userId: req.user!.id,
+        type: 'first_pulse',
+        metadata: { surveyId: survey.id },
+      });
+
+      res.json(survey);
+    } catch (error) {
+      console.error("Create pulse survey error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/pulse-surveys", authenticateUser, async (req, res) => {
+    try {
+      const surveys = await storage.getPulseSurveys(req.user!.id, 30);
+      res.json(surveys);
+    } catch (error) {
+      console.error("Get pulse surveys error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/role-play/:id/complete", authenticateUser, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const session = await storage.getRolePlaySession(id);
+
+      if (!session) {
+        return res.status(404).json({ error: "Session not found" });
+      }
+
+      if (session.userId !== req.user!.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      // Generate feedback
+      const transcript = (session.transcript as any[])
+        .map((msg: any) => `${msg.speaker === "user" ? "User" : session.persona}: ${msg.message}`)
+        .join("\n\n");
+
+      const feedbackPrompt = `As a leadership coach, analyze this role-play conversation:
+
+SCENARIO: ${session.scenario}
+PERSONA PLAYED: ${session.persona}
+
+TRANSCRIPT:
+${transcript}
+
+Provide constructive feedback in JSON format:
+{
+  "strengths": ["strength1", "strength2", "strength3"],
+  "improvements": ["improvement1", "improvement2", "improvement3"],
+  "suggestedLines": ["alternative line 1", "alternative line 2"]
+}
+
+Focus on communication effectiveness, clarity, and handling the difficult stakeholder. Be specific and actionable.`;
+
+      const feedbackResponse = await openaiService.getLeadershipResponse(feedbackPrompt, "role_play", []);
+      const feedback = JSON.parse(feedbackResponse.message);
+
+      await storage.updateRolePlaySession(id, {
+        status: "completed",
+        completedAt: new Date(),
+        feedback,
+      });
+
+      // Track checkpoint
+      await storage.createCheckpoint({
+        userId: req.user!.id,
+        type: 'first_roleplay',
+        metadata: { sessionId: id },
+      });
+
+      res.json({ feedback });
+    } catch (error) {
+      console.error("Complete role play session error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
