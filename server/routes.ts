@@ -771,6 +771,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "No document uploaded" });
       }
 
+      // Reject legacy .doc files (only .docx supported)
+      const allowedTypes = [
+        'application/pdf',
+        'text/plain',
+        'text/csv',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      ];
+      if (!allowedTypes.includes(req.file.mimetype) && !req.file.originalname.endsWith('.csv')) {
+        return res.status(400).json({ error: "Unsupported file type. Please upload PDF, Word (.docx), CSV, or text files." });
+      }
+
       const analysisResult = await openaiService.analyzeDocumentProfessional(
         req.file.buffer,
         req.file.originalname,
@@ -781,6 +792,451 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Document analysis error:", error);
       res.status(500).json({ error: "Failed to analyze document" });
+    }
+  });
+
+  // AI Document Analysis endpoint with structured extraction
+  app.post("/api/lgp360/analyze-structured", authenticateUser, upload.single("document"), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No document uploaded" });
+      }
+
+      // Reject legacy .doc files (only .docx supported)
+      const allowedTypes = [
+        'application/pdf',
+        'text/plain',
+        'text/csv',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      ];
+      if (!allowedTypes.includes(req.file.mimetype) && !req.file.originalname.endsWith('.csv')) {
+        return res.status(400).json({ error: "Unsupported file type. Please upload PDF, Word (.docx), CSV, or text files." });
+      }
+
+      const analysisResult = await openaiService.analyzeDocument360Structured(
+        req.file.buffer,
+        req.file.originalname,
+        req.file.mimetype
+      );
+
+      res.json(analysisResult);
+    } catch (error) {
+      console.error("Structured document analysis error:", error);
+      res.status(500).json({ error: "Failed to analyze document" });
+    }
+  });
+
+  // Profile Update APIs
+  app.patch("/api/profile/growth-profile", authenticateUser, async (req, res) => {
+    try {
+      const { growthProfile } = req.body;
+      const updatedUser = await storage.updateUser(req.user!.id, { growthProfile });
+      if (!updatedUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.json({ success: true, user: updatedUser });
+    } catch (error) {
+      console.error("Update growth profile error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.patch("/api/profile/red-zones", authenticateUser, async (req, res) => {
+    try {
+      const { redZones } = req.body;
+      const updatedUser = await storage.updateUser(req.user!.id, { redZones });
+      if (!updatedUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.json({ success: true, user: updatedUser });
+    } catch (error) {
+      console.error("Update red zones error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.patch("/api/profile/green-zones", authenticateUser, async (req, res) => {
+    try {
+      const { greenZones } = req.body;
+      const updatedUser = await storage.updateUser(req.user!.id, { greenZones });
+      if (!updatedUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.json({ success: true, user: updatedUser });
+    } catch (error) {
+      console.error("Update green zones error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.patch("/api/profile/recommendations", authenticateUser, async (req, res) => {
+    try {
+      const { recommendations } = req.body;
+      const updatedUser = await storage.updateUser(req.user!.id, { recommendations });
+      if (!updatedUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.json({ success: true, user: updatedUser });
+    } catch (error) {
+      console.error("Update recommendations error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/profile/obp", authenticateUser, async (req, res) => {
+    try {
+      const { obpData } = req.body;
+      const updatedUser = await storage.updateUser(req.user!.id, { obpData });
+      if (!updatedUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.json({ success: true, user: updatedUser });
+    } catch (error) {
+      console.error("Update OBP error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/profile/immunity-to-change", authenticateUser, async (req, res) => {
+    try {
+      const { immunityToChangeData } = req.body;
+      const updatedUser = await storage.updateUser(req.user!.id, { immunityToChangeData });
+      if (!updatedUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.json({ success: true, user: updatedUser });
+    } catch (error) {
+      console.error("Update Immunity to Change error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Success Checkpoints API
+  app.post("/api/checkpoints", authenticateUser, async (req, res) => {
+    try {
+      const checkpoint = await storage.createCheckpoint({
+        userId: req.user!.id,
+        type: req.body.type,
+        metadata: req.body.metadata,
+      });
+      res.json(checkpoint);
+    } catch (error) {
+      console.error("Create checkpoint error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/checkpoints", authenticateUser, async (req, res) => {
+    try {
+      const checkpoints = await storage.getUserCheckpoints(req.user!.id);
+      res.json(checkpoints);
+    } catch (error) {
+      console.error("Get checkpoints error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Prepare Briefs API
+  app.post("/api/prepare-briefs", authenticateUser, async (req, res) => {
+    try {
+      const { title, goal, stakeholders, keyPoints, blockers, actions } = req.body;
+
+      // Generate AI brief and checklist
+      const prompt = `You are a leadership coach helping someone prepare for an important conversation.
+
+Based on the following information, create a concise, practical one-page brief (max 300 words) and a checklist of 4-6 key items to remember.
+
+CONVERSATION PREP:
+Title: ${title}
+Goal: ${goal}
+${stakeholders.length > 0 ? `Stakeholders: ${stakeholders.join(", ")}` : ""}
+${keyPoints.length > 0 ? `Key Points: ${keyPoints.join("; ")}` : ""}
+${blockers.length > 0 ? `Potential Blockers: ${blockers.join("; ")}` : ""}
+${actions.length > 0 ? `Desired Actions: ${actions.join("; ")}` : ""}
+
+Return ONLY a JSON object (no other text) with:
+{
+  "brief": "string (conversational, encouraging tone, max 300 words)",
+  "checklist": ["item1", "item2", "item3", "item4", "item5", "item6"]
+}`;
+
+      const aiResponse = await openaiService.getLeadershipResponse(prompt, "conversation_prep", []);
+      const parsed = JSON.parse(aiResponse.message);
+
+      const brief = await storage.createPrepareBrief({
+        userId: req.user!.id,
+        title,
+        goal,
+        stakeholders,
+        keyPoints,
+        blockers,
+        actions,
+        brief: parsed.brief,
+        checklist: parsed.checklist.map((item: string) => ({ item, completed: false })),
+      });
+
+      // Track checkpoint
+      await storage.createCheckpoint({
+        userId: req.user!.id,
+        type: 'first_brief',
+        metadata: { briefId: brief.id },
+      });
+
+      res.json(brief);
+    } catch (error) {
+      console.error("Create prepare brief error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/prepare-briefs", authenticateUser, async (req, res) => {
+    try {
+      const briefs = await storage.getPrepareBriefs(req.user!.id);
+      res.json(briefs);
+    } catch (error) {
+      console.error("Get prepare briefs error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/prepare-briefs/:id", authenticateUser, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const brief = await storage.getPrepareBrief(id);
+
+      if (!brief) {
+        return res.status(404).json({ error: "Brief not found" });
+      }
+
+      if (brief.userId !== req.user!.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      res.json(brief);
+    } catch (error) {
+      console.error("Get prepare brief error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Role Play API
+  app.post("/api/role-play", authenticateUser, async (req, res) => {
+    try {
+      const { scenario, persona } = req.body;
+
+      // Generate AI's opening line
+      const openingPrompt = `You are role-playing as: ${persona}
+
+The scenario is: ${scenario}
+
+You are a difficult stakeholder in this conversation. Be realistic and challenging, but not rude. Start the conversation by greeting the user and asking them what they want to discuss. Keep it brief (1-2 sentences).
+
+Respond ONLY with your opening line, nothing else.`;
+
+      const aiResponse = await openaiService.getLeadershipResponse(openingPrompt, "role_play", []);
+
+      const session = await storage.createRolePlaySession({
+        userId: req.user!.id,
+        scenario,
+        persona,
+        transcript: [{
+          speaker: "ai",
+          message: aiResponse.message,
+          timestamp: new Date().toISOString(),
+        }],
+      });
+
+      res.json({
+        id: session.id,
+        aiOpening: aiResponse.message,
+      });
+    } catch (error) {
+      console.error("Create role play session error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/role-play/:id/message", authenticateUser, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { message } = req.body;
+
+      const session = await storage.getRolePlaySession(id);
+
+      if (!session) {
+        return res.status(404).json({ error: "Session not found" });
+      }
+
+      if (session.userId !== req.user!.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      // Build conversation history
+      const conversationHistory = (session.transcript as any[]).map((msg: any) => ({
+        sender: (msg.speaker === "user" ? "user" : "assistant") as "user" | "assistant",
+        text: msg.message,
+      }));
+
+      // Generate AI response
+      const prompt = `You are role-playing as: ${session.persona}
+
+The scenario is: ${session.scenario}
+
+You are a difficult stakeholder in this conversation. Be realistic and challenging, but not rude. The user just said: "${message}"
+
+Respond naturally as this persona would. Keep your response brief (2-3 sentences max).
+
+Respond ONLY with your response, nothing else.`;
+
+      const aiResponse = await openaiService.getLeadershipResponse(prompt, "role_play", conversationHistory);
+
+      // Update transcript
+      const updatedTranscript = [
+        ...(session.transcript as any[]),
+        {
+          speaker: "user",
+          message,
+          timestamp: new Date().toISOString(),
+        },
+        {
+          speaker: "ai",
+          message: aiResponse.message,
+          timestamp: new Date().toISOString(),
+        },
+      ];
+
+      await storage.updateRolePlaySession(id, {
+        transcript: updatedTranscript,
+      });
+
+      res.json({ aiResponse: aiResponse.message });
+    } catch (error) {
+      console.error("Role play message error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/role-play/sessions", authenticateUser, async (req, res) => {
+    try {
+      const sessions = await storage.getRolePlaySessions(req.user!.id);
+      res.json(sessions);
+    } catch (error) {
+      console.error("Get role play sessions error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.patch("/api/role-play/:id", authenticateUser, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const session = await storage.getRolePlaySession(id);
+
+      if (!session) {
+        return res.status(404).json({ error: "Session not found" });
+      }
+
+      if (session.userId !== req.user!.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const updated = await storage.updateRolePlaySession(id, req.body);
+      res.json(updated);
+    } catch (error) {
+      console.error("Update role play session error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Pulse Survey API
+  app.post("/api/pulse-surveys", authenticateUser, async (req, res) => {
+    try {
+      const { responses, notes } = req.body;
+
+      const survey = await storage.createPulseSurvey({
+        userId: req.user!.id,
+        responses,
+        notes: notes || null,
+      });
+
+      // Track checkpoint
+      await storage.createCheckpoint({
+        userId: req.user!.id,
+        type: 'first_pulse',
+        metadata: { surveyId: survey.id },
+      });
+
+      res.json(survey);
+    } catch (error) {
+      console.error("Create pulse survey error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/pulse-surveys", authenticateUser, async (req, res) => {
+    try {
+      const surveys = await storage.getPulseSurveys(req.user!.id, 30);
+      res.json(surveys);
+    } catch (error) {
+      console.error("Get pulse surveys error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/role-play/:id/complete", authenticateUser, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const session = await storage.getRolePlaySession(id);
+
+      if (!session) {
+        return res.status(404).json({ error: "Session not found" });
+      }
+
+      if (session.userId !== req.user!.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      // Generate feedback
+      const transcript = (session.transcript as any[])
+        .map((msg: any) => `${msg.speaker === "user" ? "User" : session.persona}: ${msg.message}`)
+        .join("\n\n");
+
+      const feedbackPrompt = `As a leadership coach, analyze this role-play conversation:
+
+SCENARIO: ${session.scenario}
+PERSONA PLAYED: ${session.persona}
+
+TRANSCRIPT:
+${transcript}
+
+Provide constructive feedback in JSON format:
+{
+  "strengths": ["strength1", "strength2", "strength3"],
+  "improvements": ["improvement1", "improvement2", "improvement3"],
+  "suggestedLines": ["alternative line 1", "alternative line 2"]
+}
+
+Focus on communication effectiveness, clarity, and handling the difficult stakeholder. Be specific and actionable.`;
+
+      const feedbackResponse = await openaiService.getLeadershipResponse(feedbackPrompt, "role_play", []);
+      const feedback = JSON.parse(feedbackResponse.message);
+
+      await storage.updateRolePlaySession(id, {
+        status: "completed",
+        completedAt: new Date(),
+        feedback,
+      });
+
+      // Track checkpoint
+      await storage.createCheckpoint({
+        userId: req.user!.id,
+        type: 'first_roleplay',
+        metadata: { sessionId: id },
+      });
+
+      res.json({ feedback });
+    } catch (error) {
+      console.error("Complete role play session error:", error);
+      res.status(500).json({ error: "Internal server error" });
     }
   });
 

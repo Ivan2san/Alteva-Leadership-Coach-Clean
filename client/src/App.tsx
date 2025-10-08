@@ -7,12 +7,9 @@ import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthWrapper } from "@/components/AuthWrapper";
-
-import { flags } from "@/lib/flags";
-import JourneyV2Router from "@/journey2/Router";
+import { useAuth } from "@/hooks/useAuth";
 
 // v1 pages
-import Home from "@/pages/home";
 import Login from "@/pages/login";
 import Signup from "@/pages/signup";
 import PromptSelection from "@/pages/prompt-selection";
@@ -24,21 +21,32 @@ import PromptLibrary from "@/pages/prompt-library";
 import Settings from "@/pages/settings";
 import WelcomeGuide from "@/pages/welcome-guide";
 import LGP360Report from "@/pages/lgp360-report";
+import Onboarding from "@/pages/onboarding";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard"; // stub exists
+import Profile from "@/pages/profile";
+import PreparePage from "@/pages/prepare";
+import RolePlayPage from "@/pages/role-play";
+import RolePlayHistoryPage from "@/pages/role-play-history";
+import PulsePage from "@/pages/pulse";
+import GeneralChat from "@/pages/general-chat";
 
-// When journeyV2 is ON, push "/" -> "/journey"
-function JumpToJourney() {
-  const [, navigate] = useLocation();
-  React.useEffect(() => {
-    navigate("/journey");
-  }, [navigate]);
-  return null;
-}
-
-// Root route: v1 shows Home, v2 jumps to /journey
+// Root route: redirects authenticated users to Profile, others to Login
 function Root() {
-  return flags.journeyV2 ? <JumpToJourney /> : <Home />;
+  const [, navigate] = useLocation();
+  const { isAuthenticated, isLoading } = useAuth();
+
+  React.useEffect(() => {
+    if (!isLoading) {
+      if (isAuthenticated) {
+        navigate("/profile");
+      } else {
+        navigate("/login");
+      }
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+
+  return null;
 }
 
 function AppRouter() {
@@ -50,25 +58,25 @@ function AppRouter() {
       {/* Common pages */}
       <Route path="/login" component={Login} />
       <Route path="/signup" component={Signup} />
+      <Route path="/onboarding" component={Onboarding} />
+      <Route path="/profile" component={Profile} />
       <Route path="/knowledge-base" component={KnowledgeBase} />
       <Route path="/conversations" component={Conversations} />
+      <Route path="/conversations/prepare" component={PreparePage} />
+      <Route path="/conversations/role-play" component={RolePlayPage} />
+      <Route path="/conversations/role-play/history" component={RolePlayHistoryPage} />
+      <Route path="/conversations/pulse" component={PulsePage} />
       <Route path="/analytics" component={Analytics} />
       <Route path="/prompt-library" component={PromptLibrary} />
       <Route path="/settings" component={Settings} />
       <Route path="/guide" component={WelcomeGuide} />
       <Route path="/lgp360" component={LGP360Report} />
 
-      {/* v1-only routes */}
-      {!flags.journeyV2 && (
-        <>
-          <Route path="/dashboard" component={Dashboard} />
-          <Route path="/prompts/:topic" component={PromptSelection} />
-          <Route path="/chat/:topic" component={Chat} />
-        </>
-      )}
-
-      {/* v2 (captures /journey/**) */}
-      {flags.journeyV2 && <Route path="/journey/:rest*" component={JourneyV2Router} />}
+      {/* Chat routes */}
+      <Route path="/chat" component={GeneralChat} />
+      <Route path="/dashboard" component={Dashboard} />
+      <Route path="/prompts/:topic" component={PromptSelection} />
+      <Route path="/chat/:topic" component={Chat} />
 
       {/* 404 */}
       <Route component={NotFound} />

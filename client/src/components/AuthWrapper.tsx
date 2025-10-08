@@ -7,7 +7,7 @@ interface AuthWrapperProps {
 
 export function AuthWrapper({ children }: AuthWrapperProps) {
   const [location] = useLocation();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
 
   // Public routes that don't require authentication
   const publicRoutes = ["/login", "/signup"];
@@ -30,6 +30,16 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
   // If not authenticated and not on public route, redirect to login
   if (!isAuthenticated) {
     window.location.href = "/login";
+    return null;
+  }
+
+  // 360 Gatekeeping: Lock app until 360 uploaded or sample chosen
+  // Allow onboarding page itself to be accessed
+  const needsOnboarding = !user?.lgp360Assessment;
+  const isOnboardingRoute = location === "/onboarding";
+  
+  if (needsOnboarding && !isOnboardingRoute) {
+    window.location.href = "/onboarding";
     return null;
   }
 

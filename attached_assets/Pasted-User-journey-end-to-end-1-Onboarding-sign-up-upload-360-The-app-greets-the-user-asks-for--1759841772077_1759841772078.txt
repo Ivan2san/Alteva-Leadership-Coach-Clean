@@ -1,0 +1,62 @@
+User journey (end to end)
+1) Onboarding: sign up → upload 360
+● The app greets the user, asks for a basic account, then immediately asks for their 360 report. No detours, no treasure hunt.
+● They drag in a PDF/CSV. A progress bar shows “Uploading → Reading → Summarising.”
+● When it’s done, the app confirms what it learned in plain English and lets the user tweak anything obvious (name, role, values).
+● Gatekeeping that actually helps: the rest of the app stays locked until the report is uploaded or they choose a sample report.
+Outcome: user lands with a seeded profile instead of a blank slate.
+2) Home: Profile Overview
+● A tidy dashboard says “Here’s you”
+● Cards show:
+○ Growth profile and personal values
+○ A short summary of the 360
+○ Red Zones (watch-outs) and Green Zones (strengths to lean on)
+○ A few practical recommendations
+● Two planning areas live here:
+○ OBP: objectives and simple checklists
+○ Immunity to Change: commitments, competing commitments, and small experiments
+● Everything is editable. Changes are reflected everywhere else, because consistency is not optional.
+Outcome: the user knows what the app thinks about them and what to do next.
+3) Hero area: Chat (freeform, like ChatGPT)
+● Big chat window. Type normal questions: “What should I focus on before my mid-year review?” or “Rewrite this feedback so it lands.”
+● The chat quietly uses their 360 summary, values, and plans as context. Visible chips show what context is in play. Nothing creepy, just honest.
+● One-tap shortcuts jump to the structured tools: Prepare, Role Play, Pulse.
+Outcome: fast help for whatever’s front-of-mind, without digging through menus.
+4) Structured Conversations
+This is where the user does more deliberate work. Three tools, one shelf.
+A) Prepare for a conversation
+● A short wizard asks: goal, stakeholders, key points, likely blockers, actions.
+● At the end, the user gets a one-page brief and a small checklist they can actually use.
+● Saved to history; shows up in chat context when relevant.
+Outcome: they walk in prepared, not just inspired.
+B) Role Play
+● The user picks a scenario and a persona. They practise the conversation with an AI actor.
+● Instant feedback panel: what they did well, what fell flat, suggested lines to try.
+● Transcript and feedback are saved, so improvement is visible over time.
+Outcome: safer practice, better reps, fewer “wish I’d said” moments.
+C) Pulse Survey (from their organisation or manual)
+● If their org is connected, the latest pulse appears. If not, they can enter quick answers themselves.
+● The app shows simple trends over time and nudges relevant recommendations.
+Outcome: a lightweight way to keep a finger on the vibe without drowning in charts.
+Navigation that doesn’t fight the user
+● Three tabs: Profile, Chat, Conversations.
+● Conversations opens to a page with three clear tiles: Prepare, Role Play, Pulse. No nesting doll menus.
+Guardrails that feel like help
+● If the 360 isn’t uploaded, the app invites the user to do that first or use a sample.
+● If a profile field looks empty, a gentle nudge appears where it’s needed, not as a lecture.
+● Privacy is explicit: your report and chats are private to you. Full stop.
+Moments that matter (success checkpoints)
+● Report uploaded and parsed
+● First useful recommendation saved
+● First chat that references their profile
+● First prepared brief exported or checked off
+● First role play completed with feedback
+● First pulse update and a trend line shown
+Tone and micro-copy (because words do heavy lifting)
+● “Upload your 360. I’ll read it and pull out the good stuff.”
+● “These are your Red Zones. We’ll work around them, not through denial.”
+● “Ready to practise? I’ll be the difficult stakeholder. You’re welcome.”
+Mobile reality check
+● Upload supports files from email or cloud storage.
+● Chat and Prepare are single-column and thumb-friendly.
+● Role Play runs fine on the train; transcripts save automatically when the user bails at their stop.

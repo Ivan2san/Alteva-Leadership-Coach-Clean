@@ -9,8 +9,12 @@ import {
   BarChart3,
   Calendar,
   Users,
-  Clock
+  Clock,
+  Award,
+  CheckCircle2,
+  Circle
 } from "lucide-react";
+import { format } from "date-fns";
 import { topicConfigurations } from "@/lib/topic-configurations";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { BackButton } from "@/components/back-button";
@@ -41,7 +45,19 @@ export default function AnalyticsPage() {
     queryKey: ["/api/analytics/topic-engagement"],
   });
 
-  const isLoading = statsLoading || engagementLoading;
+  // Fetch checkpoints
+  const { data: checkpoints = [], isLoading: checkpointsLoading } = useQuery({
+    queryKey: ["/api/checkpoints"],
+    queryFn: async () => {
+      const res = await fetch("/api/checkpoints", {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to fetch checkpoints");
+      return res.json();
+    },
+  });
+
+  const isLoading = statsLoading || engagementLoading || checkpointsLoading;
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
@@ -299,6 +315,61 @@ export default function AnalyticsPage() {
                     </div>
                   </>
                 )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Success Checkpoints */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-2xl flex items-center gap-2">
+                <Award className="h-5 w-5" />
+                Success Checkpoints
+              </CardTitle>
+              <CardDescription>
+                Track your leadership development milestones
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {[
+                  { type: 'report_parsed', label: 'Uploaded 360 Report', description: 'Started your leadership journey' },
+                  { type: 'first_profile_chat', label: 'First Profile Chat', description: 'Explored your leadership profile' },
+                  { type: 'first_brief', label: 'Created First Brief', description: 'Prepared for a key conversation' },
+                  { type: 'first_roleplay', label: 'Completed First Role Play', description: 'Practiced a difficult conversation' },
+                  { type: 'first_pulse', label: 'Logged First Pulse', description: 'Started tracking your progress' },
+                ].map((milestone) => {
+                  const achieved = checkpoints.find((cp: any) => cp.type === milestone.type);
+                  return (
+                    <div 
+                      key={milestone.type} 
+                      className={`flex items-start gap-4 p-4 rounded-lg border ${
+                        achieved 
+                          ? 'bg-muted border-muted-foreground/20' 
+                          : 'bg-background border-border'
+                      }`}
+                    >
+                      {achieved ? (
+                        <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                      ) : (
+                        <Circle className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium">
+                          {milestone.label}
+                        </h4>
+                        <p className="text-sm text-muted-foreground">
+                          {milestone.description}
+                        </p>
+                        {achieved && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Achieved {format(new Date(achieved.achievedAt), 'MMM d, yyyy')}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>

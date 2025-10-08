@@ -10,11 +10,23 @@ import {
   type InsertKnowledgeBaseFile,
   type PromptTemplate,
   type InsertPromptTemplate,
+  type Checkpoint,
+  type InsertCheckpoint,
+  type PrepareBrief,
+  type InsertPrepareBrief,
+  type RolePlaySession,
+  type InsertRolePlaySession,
+  type PulseSurvey,
+  type InsertPulseSurvey,
   createUserSchema,
   users, 
   conversations, 
   knowledgeBaseFiles,
-  promptTemplates
+  promptTemplates,
+  checkpoints,
+  prepareBriefs,
+  rolePlaySessions,
+  pulseSurveys
 } from "@shared/schema";
 import { hashPassword, verifyPassword } from "./auth";
 import { db } from "./db";
@@ -67,6 +79,30 @@ export interface IStorage {
   updateKnowledgeBaseFile(id: string, updates: Partial<KnowledgeBaseFile>): Promise<KnowledgeBaseFile | undefined>;
   deleteKnowledgeBaseFile(id: string): Promise<boolean>;
   searchKnowledgeBaseFiles(query: string): Promise<KnowledgeBaseFile[]>;
+  
+  // Checkpoint operations
+  createCheckpoint(checkpoint: InsertCheckpoint): Promise<Checkpoint>;
+  getUserCheckpoints(userId: string): Promise<Checkpoint[]>;
+  hasCheckpoint(userId: string, type: string): Promise<boolean>;
+
+  // Prepare Brief operations
+  createPrepareBrief(brief: InsertPrepareBrief): Promise<PrepareBrief>;
+  getPrepareBriefs(userId: string): Promise<PrepareBrief[]>;
+  getPrepareBrief(id: string): Promise<PrepareBrief | undefined>;
+  updatePrepareBrief(id: string, updates: Partial<PrepareBrief>): Promise<PrepareBrief | undefined>;
+  deletePrepareBrief(id: string): Promise<boolean>;
+
+  // Role Play Session operations
+  createRolePlaySession(session: InsertRolePlaySession): Promise<RolePlaySession>;
+  getRolePlaySessions(userId: string): Promise<RolePlaySession[]>;
+  getRolePlaySession(id: string): Promise<RolePlaySession | undefined>;
+  updateRolePlaySession(id: string, updates: Partial<RolePlaySession>): Promise<RolePlaySession | undefined>;
+  deleteRolePlaySession(id: string): Promise<boolean>;
+
+  // Pulse Survey operations
+  createPulseSurvey(survey: InsertPulseSurvey): Promise<PulseSurvey>;
+  getPulseSurveys(userId: string, limit?: number): Promise<PulseSurvey[]>;
+  getPulseSurvey(id: string): Promise<PulseSurvey | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -110,14 +146,33 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUserLGP360(id: string, lgp360Data: LGP360ReportData): Promise<User | undefined> {
+    const updateData: any = {
+      lgp360OriginalContent: lgp360Data.originalContent || null,
+      lgp360Assessment: lgp360Data.assessment,
+      lgp360UploadedAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    // Add structured insights if provided
+    if (lgp360Data.personalValues !== undefined) {
+      updateData.personalValues = lgp360Data.personalValues;
+    }
+    if (lgp360Data.growthProfile !== undefined) {
+      updateData.growthProfile = lgp360Data.growthProfile;
+    }
+    if (lgp360Data.redZones !== undefined) {
+      updateData.redZones = lgp360Data.redZones;
+    }
+    if (lgp360Data.greenZones !== undefined) {
+      updateData.greenZones = lgp360Data.greenZones;
+    }
+    if (lgp360Data.recommendations !== undefined) {
+      updateData.recommendations = lgp360Data.recommendations;
+    }
+
     const [user] = await db
       .update(users)
-      .set({ 
-        lgp360OriginalContent: lgp360Data.originalContent || null,
-        lgp360Assessment: lgp360Data.assessment,
-        lgp360UploadedAt: new Date(),
-        updatedAt: new Date() 
-      })
+      .set(updateData)
       .where(eq(users.id, id))
       .returning();
     return user;
@@ -378,6 +433,120 @@ export class DatabaseStorage implements IStorage {
           ilike(knowledgeBaseFiles.description, `%${query}%`),
         )
       );
+  }
+
+  // Checkpoint operations
+  async createCheckpoint(checkpoint: InsertCheckpoint): Promise<Checkpoint> {
+    const [newCheckpoint] = await db.insert(checkpoints).values(checkpoint).returning();
+    return newCheckpoint;
+  }
+
+  async getUserCheckpoints(userId: string): Promise<Checkpoint[]> {
+    return await db
+      .select()
+      .from(checkpoints)
+      .where(eq(checkpoints.userId, userId))
+      .orderBy(desc(checkpoints.achievedAt));
+  }
+
+  async hasCheckpoint(userId: string, type: string): Promise<boolean> {
+    const [checkpoint] = await db
+      .select()
+      .from(checkpoints)
+      .where(and(eq(checkpoints.userId, userId), eq(checkpoints.type, type)))
+      .limit(1);
+    return !!checkpoint;
+  }
+
+  // Prepare Brief operations
+  async createPrepareBrief(brief: InsertPrepareBrief): Promise<PrepareBrief> {
+    const [newBrief] = await db.insert(prepareBriefs).values(brief).returning();
+    return newBrief;
+  }
+
+  async getPrepareBriefs(userId: string): Promise<PrepareBrief[]> {
+    return await db
+      .select()
+      .from(prepareBriefs)
+      .where(eq(prepareBriefs.userId, userId))
+      .orderBy(desc(prepareBriefs.createdAt));
+  }
+
+  async getPrepareBrief(id: string): Promise<PrepareBrief | undefined> {
+    const [brief] = await db.select().from(prepareBriefs).where(eq(prepareBriefs.id, id));
+    return brief;
+  }
+
+  async updatePrepareBrief(id: string, updates: Partial<PrepareBrief>): Promise<PrepareBrief | undefined> {
+    const [brief] = await db
+      .update(prepareBriefs)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(prepareBriefs.id, id))
+      .returning();
+    return brief;
+  }
+
+  async deletePrepareBrief(id: string): Promise<boolean> {
+    const result = await db.delete(prepareBriefs).where(eq(prepareBriefs.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Role Play Session operations
+  async createRolePlaySession(session: InsertRolePlaySession): Promise<RolePlaySession> {
+    const [newSession] = await db.insert(rolePlaySessions).values(session).returning();
+    return newSession;
+  }
+
+  async getRolePlaySessions(userId: string): Promise<RolePlaySession[]> {
+    return await db
+      .select()
+      .from(rolePlaySessions)
+      .where(eq(rolePlaySessions.userId, userId))
+      .orderBy(desc(rolePlaySessions.createdAt));
+  }
+
+  async getRolePlaySession(id: string): Promise<RolePlaySession | undefined> {
+    const [session] = await db.select().from(rolePlaySessions).where(eq(rolePlaySessions.id, id));
+    return session;
+  }
+
+  async updateRolePlaySession(id: string, updates: Partial<RolePlaySession>): Promise<RolePlaySession | undefined> {
+    const [session] = await db
+      .update(rolePlaySessions)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(rolePlaySessions.id, id))
+      .returning();
+    return session;
+  }
+
+  async deleteRolePlaySession(id: string): Promise<boolean> {
+    const result = await db.delete(rolePlaySessions).where(eq(rolePlaySessions.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Pulse Survey operations
+  async createPulseSurvey(survey: InsertPulseSurvey): Promise<PulseSurvey> {
+    const [newSurvey] = await db.insert(pulseSurveys).values(survey).returning();
+    return newSurvey;
+  }
+
+  async getPulseSurveys(userId: string, limit?: number): Promise<PulseSurvey[]> {
+    let query = db
+      .select()
+      .from(pulseSurveys)
+      .where(eq(pulseSurveys.userId, userId))
+      .orderBy(desc(pulseSurveys.date));
+    
+    if (limit) {
+      query = query.limit(limit) as any;
+    }
+    
+    return await query;
+  }
+
+  async getPulseSurvey(id: string): Promise<PulseSurvey | undefined> {
+    const [survey] = await db.select().from(pulseSurveys).where(eq(pulseSurveys.id, id));
+    return survey;
   }
 }
 

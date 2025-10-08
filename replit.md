@@ -76,3 +76,26 @@ The system integrates with **OpenAI's API** using a sophisticated prompt enginee
 ## Additional Integrations
 - **Replit Platform**: Integrated development environment with specialized plugins for cartographer and runtime error handling
 - **Service Worker**: Custom implementation for PWA functionality and offline support
+
+# Recent Changes
+
+## October 7, 2025 - New 3-Tab Navigation Architecture
+
+### Journey 2 Disabled
+- Updated `.env` file: Changed `VITE_JOURNEY_V2=1` to `VITE_JOURNEY_V2=0`
+- Journey 2 routes are now disabled in App.tsx
+- Application reverts to v1 routes (home, dashboard, chat, etc.)
+- Note: Browser hard refresh (Ctrl+Shift+R / Cmd+Shift+R) may be needed to clear cached bundle
+
+### New Navigation Structure - INTEGRATED ✅
+Created and integrated `client/src/components/MainNavigation.tsx` - A 3-tab navigation component with:
+- **Profile Tab**: Routes to `/profile` - Shows user's leadership profile dashboard
+- **Chat Tab**: Routes to `/chat/general` - Enhanced chat interface  
+- **Conversations Tab**: Routes to `/conversations` - Conversation tools hub (Prepare, Role Play, Pulse)
+
+The MainNavigation component is now fully integrated and displayed on:
+- Profile page (`/profile`)
+- Chat page (`/chat/:topic`)
+- Conversations page (`/conversations`)
+
+Navigation uses Tabs component from `@/components/ui/tabs` with clean, simple styling. Users can seamlessly switch between the three main sections of the app.

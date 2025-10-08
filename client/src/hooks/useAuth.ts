@@ -16,14 +16,14 @@ export function useAuth() {
     queryFn: async () => {
       const token = localStorage.getItem('authToken');
       
-      if (!token) {
-        return null;
+      // Always try to fetch user (backend will use default admin if no token)
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
       }
       
       const response = await fetch("/api/auth/me", {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers
       });
       
       if (!response.ok) {
