@@ -25,7 +25,8 @@ import {
   ExternalLink,
   Trash2,
   Target,
-  TrendingUp
+  TrendingUp,
+  Info
 } from "lucide-react";
 import { format } from "date-fns";
 import MainNavigation from "@/components/MainNavigation";
@@ -34,7 +35,20 @@ export default function ProfilePage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
+  
+  // Check if this is a first-time visit from onboarding and clear the flag
+  const [showFirstTimeBanner, setShowFirstTimeBanner] = useState(() => {
+    const params = new URLSearchParams(location.split('?')[1] || '');
+    const isFirstTime = params.get('firstTime') === 'true';
+    
+    // Clear the query parameter from URL if present
+    if (isFirstTime) {
+      navigate('/profile', { replace: true });
+    }
+    
+    return isFirstTime;
+  });
 
   // State for editing
   const [editingGrowthProfile, setEditingGrowthProfile] = useState(false);
@@ -418,6 +432,29 @@ export default function ProfilePage() {
               Your leadership insights, strengths, and growth areas all in one place.
             </p>
           </div>
+
+          {/* First-time user banner */}
+          {showFirstTimeBanner && (
+            <Card className="border-primary/50 bg-primary/5">
+              <CardContent className="pt-6">
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Info className="h-5 w-5 text-primary" />
+                    </div>
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <h3 className="font-semibold text-primary">Welcome! Please Review Your Profile</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Take a moment to review and update your profile information across all areas below. 
+                      Add your personal values, growth goals, strengths, and areas to work on. This helps 
+                      your AI coach provide more personalized guidance tailored to your leadership journey.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

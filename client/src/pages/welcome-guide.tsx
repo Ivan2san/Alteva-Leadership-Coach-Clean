@@ -285,10 +285,21 @@ function WelcomeGuideContent({ isWelcomeFlow = false, onContinue }: WelcomeGuide
 
 // Route component wrapper
 export default function WelcomeGuide() {
-  const [location] = useLocation();
-  const isWelcomeFlow = location.includes('welcome=true');
+  const [location, setLocation] = useLocation();
+  const isOnboarding = location.includes('onboarding=true');
+  const isWelcomeFlow = location.includes('welcome=true') || isOnboarding;
   
-  return <WelcomeGuideContent isWelcomeFlow={isWelcomeFlow} />;
+  const handleOnboardingContinue = () => {
+    // After welcome guide in onboarding, go to profile for review
+    setLocation("/profile?firstTime=true");
+  };
+  
+  return (
+    <WelcomeGuideContent 
+      isWelcomeFlow={isWelcomeFlow} 
+      onContinue={isOnboarding ? handleOnboardingContinue : undefined}
+    />
+  );
 }
 
 // Export the content component for potential reuse
