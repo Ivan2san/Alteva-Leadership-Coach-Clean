@@ -254,7 +254,6 @@ export default function GeneralChat() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <MainNavigation />
       
       <main className="max-w-4xl mx-auto px-4 py-12">
         <div className="flex flex-col items-center text-center space-y-8">
