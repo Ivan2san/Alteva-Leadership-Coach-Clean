@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { BackButton } from "@/components/back-button";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { Users, Send, Loader2, TrendingUp, TrendingDown, Lightbulb, Save, Check, History } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -231,7 +230,6 @@ export default function RolePlayPage() {
         <MainNavigation />
         
         <div className="container mx-auto px-4 py-8 max-w-4xl">
-          <BackButton />
           <Breadcrumb items={[
             { label: "Conversations", href: "/conversations" },
             { label: "Role Play", current: true }
@@ -334,7 +332,6 @@ export default function RolePlayPage() {
         <MainNavigation />
         
         <div className="container mx-auto px-4 py-8 max-w-3xl">
-          <BackButton />
           <Breadcrumb items={[
             { label: "Conversations", href: "/conversations" },
             { label: "Role Play", current: true }
@@ -443,7 +440,6 @@ export default function RolePlayPage() {
       <MainNavigation />
       
       <div className="container mx-auto px-4 py-8 max-w-3xl">
-        <BackButton />
         <Breadcrumb items={[
           { label: "Conversations", href: "/conversations" },
           { label: "Role Play", current: true }

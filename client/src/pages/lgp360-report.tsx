@@ -10,7 +10,7 @@ import { lgp360ReportSchema, type LGP360ReportData } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Header from "@/components/header";
-import { BackButton } from "@/components/back-button";
+import MainNavigation from "@/components/MainNavigation";
 import { FileText, Save, CheckCircle2, Upload, FileCheck, Loader2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
@@ -148,6 +148,7 @@ export default function LGP360ReportPage() {
     return (
       <div className="min-h-screen bg-background">
         <Header />
+        <MainNavigation />
         <main className="max-w-4xl mx-auto px-4 py-6">
           <div className="text-center">Loading...</div>
         </main>
@@ -158,12 +159,10 @@ export default function LGP360ReportPage() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      <MainNavigation />
       
       <main className="max-w-4xl mx-auto px-4 py-6">
         <div className="space-y-6">
-          <div className="space-y-2">
-            <BackButton />
-          </div>
 
           {/* Header */}
           <Card>

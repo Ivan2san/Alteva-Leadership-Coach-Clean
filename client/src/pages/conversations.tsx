@@ -1,7 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Target, Users, Activity } from "lucide-react";
-import { BackButton } from "@/components/back-button";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { useLocation } from "wouter";
 import Header from "@/components/header";
@@ -63,7 +62,6 @@ export default function ConversationsPage() {
       <MainNavigation />
       
       <div className="container mx-auto px-4 py-8 max-w-6xl">
-        <BackButton />
         <Breadcrumb items={[{ label: "Conversations", current: true }]} />
       
       <div className="mb-12 text-center">

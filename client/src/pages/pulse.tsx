@@ -4,7 +4,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { BackButton } from "@/components/back-button";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { Activity, TrendingUp, Star, Loader2, Users, BarChart3, TrendingDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -132,7 +131,6 @@ export default function PulsePage() {
       <MainNavigation />
       
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <BackButton />
         <Breadcrumb items={[
           { label: "Conversations", href: "/conversations" },
           { label: "Pulse", current: true }

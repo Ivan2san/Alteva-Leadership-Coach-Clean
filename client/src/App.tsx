@@ -66,6 +66,7 @@ function AppRouter() {
       <Route path="/conversations/role-play" component={RolePlayPage} />
       <Route path="/conversations/role-play/history" component={RolePlayHistoryPage} />
       <Route path="/conversations/pulse" component={PulsePage} />
+      <Route path="/pulse" component={PulsePage} />
       <Route path="/analytics" component={Analytics} />
       <Route path="/prompt-library" component={PromptLibrary} />
       <Route path="/settings" component={Settings} />

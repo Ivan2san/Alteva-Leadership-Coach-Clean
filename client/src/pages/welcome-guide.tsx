@@ -3,7 +3,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useLocation } from "wouter";
 import { ArrowRight, BookOpen, Target, Brain, Heart, MessageSquare, TrendingUp } from "lucide-react";
 import Header from "@/components/header";
-import { BackButton } from "@/components/back-button";
 
 interface WelcomeGuideProps {
   isWelcomeFlow?: boolean;
@@ -28,11 +27,6 @@ function WelcomeGuideContent({ isWelcomeFlow = false, onContinue }: WelcomeGuide
       
       <main className="max-w-md mx-auto px-4 py-6">
         <div className="space-y-6">
-          {!isWelcomeFlow && (
-            <div className="space-y-2">
-              <BackButton />
-            </div>
-          )}
 
           {/* Welcome Header */}
           <Card className="text-center">

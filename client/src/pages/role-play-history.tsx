@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BackButton } from "@/components/back-button";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { Users, Eye, Calendar, MessageSquare, TrendingUp, AlertCircle } from "lucide-react";
 import Header from "@/components/header";
@@ -48,7 +47,6 @@ export default function RolePlayHistoryPage() {
       <MainNavigation />
       
       <div className="container mx-auto px-4 py-8 max-w-6xl">
-        <BackButton />
         <Breadcrumb items={[
           { label: "Conversations", href: "/conversations" },
           { label: "Role Play History", current: true }

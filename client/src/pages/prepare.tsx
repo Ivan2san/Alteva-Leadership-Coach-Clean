@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { BackButton } from "@/components/back-button";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { ChevronLeft, ChevronRight, Target, Users, MessageSquare, AlertTriangle, CheckSquare, Loader2, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -203,7 +202,6 @@ Generated: ${new Date(generatedBrief.createdAt).toLocaleDateString()}
         <MainNavigation />
         
         <div className="container mx-auto px-4 py-8 max-w-4xl">
-          <BackButton />
         <Breadcrumb items={[
           { label: "Conversations", href: "/conversations" },
           { label: "Prepare", current: true }
@@ -269,7 +267,6 @@ Generated: ${new Date(generatedBrief.createdAt).toLocaleDateString()}
       <MainNavigation />
       
       <div className="container mx-auto px-4 py-8 max-w-3xl">
-        <BackButton />
       <Breadcrumb items={[
         { label: "Conversations", href: "/conversations" },
         { label: "Prepare", current: true }

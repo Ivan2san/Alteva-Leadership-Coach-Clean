@@ -12,7 +12,6 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import Header from "@/components/header";
-import { BackButton } from "@/components/back-button";
 import { 
   User, 
   FileText, 
@@ -423,7 +422,6 @@ export default function ProfilePage() {
         <div className="space-y-6">
           {/* Page Header */}
           <div className="space-y-2">
-            <BackButton />
             <div className="flex items-center gap-2">
               <User className="h-6 w-6" />
               <h1 className="text-2xl font-bold">Your Profile</h1>

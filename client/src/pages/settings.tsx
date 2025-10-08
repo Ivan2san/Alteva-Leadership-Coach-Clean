@@ -23,7 +23,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/header";
-import { BackButton } from "@/components/back-button";
+import MainNavigation from "@/components/MainNavigation";
 
 export default function SettingsPage() {
   const { user, isAdmin } = useAuth();
@@ -318,11 +318,11 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      <MainNavigation />
       
       <main className="max-w-md mx-auto px-4 py-6">
         <div className="space-y-6">
           <div className="space-y-2">
-            <BackButton />
             <div className="flex items-center gap-2">
               <SettingsIcon className="h-6 w-6" />
               <h1 className="text-2xl font-bold">Settings</h1>

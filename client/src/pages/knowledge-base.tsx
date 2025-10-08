@@ -18,7 +18,8 @@ import {
 } from "lucide-react";
 import { KnowledgeBaseUploader } from "@/components/KnowledgeBaseUploader";
 import { Breadcrumb } from "@/components/breadcrumb";
-import { BackButton } from "@/components/back-button";
+import Header from "@/components/header";
+import MainNavigation from "@/components/MainNavigation";
 import type { KnowledgeBaseFile } from "@shared/schema";
 
 export default function KnowledgeBasePage() {
@@ -56,8 +57,11 @@ export default function KnowledgeBasePage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <BackButton />
+    <div className="min-h-screen bg-background">
+      <Header />
+      <MainNavigation />
+      
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
       <Breadcrumb items={[{ label: "Knowledge Base", current: true }]} />
       
       <div className="mb-8">
@@ -231,6 +235,7 @@ export default function KnowledgeBasePage() {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 }

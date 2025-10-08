@@ -167,7 +167,7 @@ export default function GeneralChat() {
       icon: TrendingUp,
       title: 'Track your progress',
       description: 'Review your growth and celebrate wins',
-      route: '/analytics',
+      route: '/pulse',
       color: 'hover:border-green-300 hover:bg-green-50/50',
     },
     {

@@ -25,7 +25,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { Breadcrumb } from "@/components/breadcrumb";
-import { BackButton } from "@/components/back-button";
+import Header from "@/components/header";
+import MainNavigation from "@/components/MainNavigation";
 import type { PromptTemplate } from "@shared/schema";
 
 const promptTemplateSchema = z.object({
@@ -194,8 +195,11 @@ export default function PromptLibraryPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <BackButton />
+    <div className="min-h-screen bg-background">
+      <Header />
+      <MainNavigation />
+      
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
       <Breadcrumb items={[{ label: "Prompt Library", current: true }]} />
       
       <div className="mb-8">
@@ -428,6 +432,7 @@ export default function PromptLibraryPage() {
           )}
         </TabsContent>
       </Tabs>
+    </div>
     </div>
   );
 }

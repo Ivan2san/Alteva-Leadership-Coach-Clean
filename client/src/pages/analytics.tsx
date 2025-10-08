@@ -17,7 +17,8 @@ import {
 import { format } from "date-fns";
 import { topicConfigurations } from "@/lib/topic-configurations";
 import { Breadcrumb } from "@/components/breadcrumb";
-import { BackButton } from "@/components/back-button";
+import Header from "@/components/header";
+import MainNavigation from "@/components/MainNavigation";
 
 interface ConversationStats {
   total: number;
@@ -76,8 +77,11 @@ export default function AnalyticsPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <BackButton />
+    <div className="min-h-screen bg-background">
+      <Header />
+      <MainNavigation />
+      
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
       <Breadcrumb items={[{ label: "Analytics", current: true }]} />
       
       <div className="mb-8">
@@ -375,6 +379,7 @@ export default function AnalyticsPage() {
           </Card>
         </div>
       )}
+    </div>
     </div>
   );
 }
