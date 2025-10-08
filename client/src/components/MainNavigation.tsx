@@ -6,10 +6,10 @@ export default function MainNavigation() {
   const [location, navigate] = useLocation();
   
   const getActiveTab = () => {
-    if (location === "/profile") return "profile";
-    if (location.startsWith("/chat")) return "chat";
+    if (location === "/chat" || location.startsWith("/chat/")) return "chat";
     if (location.startsWith("/conversations")) return "conversations";
-    return "profile";
+    if (location === "/profile") return "profile";
+    return "chat"; // Default to chat home
   };
 
   const handleTabChange = (value: string) => {
@@ -22,10 +22,6 @@ export default function MainNavigation() {
     <div className="w-full max-w-md mx-auto py-4">
       <Tabs value={getActiveTab()} onValueChange={handleTabChange} className="w-full">
         <TabsList className="w-full grid grid-cols-3">
-          <TabsTrigger value="profile" className="flex items-center gap-2">
-            <User size={18} />
-            <span>Profile</span>
-          </TabsTrigger>
           <TabsTrigger value="chat" className="flex items-center gap-2">
             <MessageSquare size={18} />
             <span>Chat</span>
@@ -33,6 +29,10 @@ export default function MainNavigation() {
           <TabsTrigger value="conversations" className="flex items-center gap-2">
             <MessagesSquare size={18} />
             <span>Conversations</span>
+          </TabsTrigger>
+          <TabsTrigger value="profile" className="flex items-center gap-2">
+            <User size={18} />
+            <span>Profile</span>
           </TabsTrigger>
         </TabsList>
       </Tabs>

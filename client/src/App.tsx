@@ -31,7 +31,7 @@ import RolePlayHistoryPage from "@/pages/role-play-history";
 import PulsePage from "@/pages/pulse";
 import GeneralChat from "@/pages/general-chat";
 
-// Root route: redirects authenticated users to Profile, others to Login
+// Root route: redirects authenticated users to Chat, others to Login
 function Root() {
   const [, navigate] = useLocation();
   const { isAuthenticated, isLoading } = useAuth();
@@ -39,7 +39,7 @@ function Root() {
   React.useEffect(() => {
     if (!isLoading) {
       if (isAuthenticated) {
-        navigate("/profile");
+        navigate("/chat");
       } else {
         navigate("/login");
       }
