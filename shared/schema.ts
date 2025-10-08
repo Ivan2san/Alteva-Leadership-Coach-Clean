@@ -82,8 +82,13 @@ export const insertUserSchema = createInsertSchema(users).omit({
   updatedAt: true,
 });
 
-export const signupSchema = insertUserSchema.extend({
+// Clean signup schema with only required fields for user registration
+export const signupSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
   confirmPassword: z.string(),
+  fullName: z.string().min(1, "Full name is required"),
+  role: z.string().optional().default("user"),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -131,7 +136,7 @@ export const insertPromptTemplateSchema = createInsertSchema(promptTemplates).om
 
 export type InsertUser = ReturnType<typeof insertUserSchema['parse']>;
 export type User = typeof users.$inferSelect;
-export type SignupData = ReturnType<typeof signupSchema['parse']>;
+export type SignupData = z.infer<typeof signupSchema>;
 export type LoginData = z.infer<typeof loginSchema>;
 export type LGP360ReportData = z.infer<typeof lgp360ReportSchema>;
 export type Conversation = typeof conversations.$inferSelect;
