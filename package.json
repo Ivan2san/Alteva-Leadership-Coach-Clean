@@ -77,7 +77,7 @@
     "cookie-parser": "^1.4.7",
     "csv-parse": "^6.1.0",
     "date-fns": "^3.6.0",
-    "drizzle-orm": "^0.39.1",
+    "drizzle-orm": "^0.44.6",
     "drizzle-zod": "^0.8.3",
     "embla-carousel-react": "^8.6.0",
     "eslint": "^9.35.0",
