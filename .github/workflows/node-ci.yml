@@ -20,7 +20,7 @@ jobs:
         journey_v2: [0, 1]   # build both OFF and ON
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node
         uses: actions/setup-node@v4
